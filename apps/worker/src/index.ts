@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { cors } from './middleware/cors';
 import { errors } from './middleware/errors';
 import { rateLimit } from './middleware/rateLimit';
+import { chatRoutes } from './routes/chat';
 import { healthRoutes } from './routes/health';
 import { plantsRoutes } from './routes/plants';
 import type { Env } from './types/env';
@@ -19,5 +20,6 @@ app.get('/', (c) => {
 
 app.route('/', healthRoutes);
 app.route('/', plantsRoutes);
+app.route('/', chatRoutes);
 
 export default app;

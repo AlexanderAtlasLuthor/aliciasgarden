@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Alicia's Garden",
   description: "Alicia's Garden: organiza tu jardín, registra tus plantas y recibe ayuda de Toni.",
   icons: {
-    icon: "/AG Logo.png",
-    shortcut: "/AG Logo.png",
-    apple: "/AG Logo.png",
+    icon: "/ag-logo.png",
+    shortcut: "/ag-logo.png",
+    apple: "/ag-logo.png",
   },
 };
 

@@ -4,4 +4,4 @@ compatibility_date = "2025-01-01"
 
 [vars]
 PROFILE_ID = "default_profile"
-CORS_ORIGIN = "http://localhost:3000"
+CORS_ORIGIN = "https://aliciasgarden.pages.dev,http://localhost:3000"

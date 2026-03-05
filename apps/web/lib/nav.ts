@@ -6,7 +6,7 @@ export type TabItem = {
 export const TABS: TabItem[] = [
   { label: "Inicio", href: "/home" },
   { label: "Toni", href: "/toni" },
-  { label: "Mi Jardín", href: "/garden" },
+  { label: "Jardín", href: "/garden" },
   { label: "Plan", href: "/plan" },
   { label: "Ajustes", href: "/settings" }
 ]

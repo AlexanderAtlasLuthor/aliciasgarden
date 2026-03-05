@@ -53,16 +53,16 @@ export default function Header({ title }: HeaderProps) {
   }, [isDrawerOpen])
 
   return (
-    <header className="relative z-40">
+    <header className="relative z-40 pt-[max(env(safe-area-inset-top),0.5rem)]">
       <div className="ag-container">
         <div className="relative flex items-center justify-center rounded-[24px] border border-white/28 bg-[#153b2f] px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
           <button
             type="button"
             aria-label="Abrir menú"
             onClick={() => setIsDrawerOpen(true)}
-            className="absolute left-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/90 transition hover:bg-white/10 md:hidden"
+            className="absolute left-2 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/90 transition hover:bg-white/10 active:scale-[0.98] md:hidden"
           >
-            <span className="text-lg leading-none">☰</span>
+            <span className="text-2xl leading-none">☰</span>
           </button>
 
           <div className="flex min-w-0 flex-col items-center justify-center gap-1">
@@ -72,7 +72,7 @@ export default function Header({ title }: HeaderProps) {
             <span className="text-primary text-xs font-medium tracking-[0.02em] md:hidden">{title}</span>
           </div>
 
-          <span className="absolute right-3 h-10 w-10 md:hidden" aria-hidden="true" />
+          <span className="absolute right-2 h-12 w-12 md:hidden" aria-hidden="true" />
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function Header({ title }: HeaderProps) {
                 type="button"
                 aria-label="Cerrar"
                 onClick={() => setIsDrawerOpen(false)}
-                className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm text-white/85 transition hover:bg-white/10"
+                className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10 active:scale-[0.98]"
               >
                 Cerrar
               </button>

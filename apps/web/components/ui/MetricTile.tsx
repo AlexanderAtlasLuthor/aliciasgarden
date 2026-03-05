@@ -36,7 +36,7 @@ export default function MetricTile({
       <div className="relative flex min-h-[110px] flex-col justify-between">
         <div>
           {icon ? (
-            <div className="text-secondary inline-flex items-center justify-center rounded-full border border-white/12 bg-white/8 px-2 py-1 text-xs">
+            <div className="text-secondary inline-flex items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a] px-2 py-1 text-xs">
               {icon}
             </div>
           ) : null}

@@ -211,7 +211,7 @@ export default function HomePage() {
             return (
               <Card key={tile.label} variant="medium" className="rounded-2xl">
                 <CardContent className="min-w-0 space-y-3 p-4">
-                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] backdrop-blur-md">
+                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a] backdrop-blur-md">
                     <span className="text-base leading-none">{tile.icon}</span>
                   </div>
 

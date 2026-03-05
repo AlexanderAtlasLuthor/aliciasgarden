@@ -1,0 +1,9 @@
+# Node dependencies and caches
+**/node_modules/
+
+# Wrangler build/dev artifacts
+apps/worker/.wrangler/
+
+# Misc OS/editor noise
+.DS_Store
+Thumbs.db

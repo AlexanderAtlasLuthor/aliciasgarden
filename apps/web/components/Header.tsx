@@ -1,22 +1,18 @@
 import Image from "next/image"
 
-import GlassSurface from "@/components/ui/GlassSurface"
-
 type HeaderProps = {
   title: string
 }
 
-export default function Header({ title }: HeaderProps) {
+export default function Header({ title: _title }: HeaderProps) {
   return (
     <header className="pt-[max(env(safe-area-inset-top),0px)]">
       <div className="ag-container">
-        <GlassSurface
-          className="flex items-center justify-center gap-3 rounded-[24px] border-white/25 bg-white/18 px-4 py-3 shadow-[0_14px_36px_rgba(0,0,0,0.42)]"
-          variant="strong"
-        >
-          <Image src="/AG Logo.png" alt="Alicia's Garden" width={32} height={32} priority />
-          <h1 className="text-ag-body text-text-primary ag-balance text-center font-semibold tracking-tight">{title}</h1>
-        </GlassSurface>
+        <div className="flex items-center justify-center rounded-[24px] border border-white/28 bg-[#153b2f] px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a]">
+            <Image src="/AG Logo white.png" alt="AG" width={42} height={42} priority />
+          </div>
+        </div>
       </div>
     </header>
   )

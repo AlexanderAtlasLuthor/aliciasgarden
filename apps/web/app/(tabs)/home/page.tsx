@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 
 import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
+import MetricTile from "@/components/ui/MetricTile"
 import { getPlants, type Plant } from "@/lib/api"
 
 export default function HomePage() {
@@ -41,20 +42,35 @@ export default function HomePage() {
   }, [])
 
   const previewPlants = plants.slice(0, 3)
+  const totalPlants = plants.length
+
+  const locationCounts = plants.reduce<Record<string, number>>((accumulator, plant) => {
+    const location = plant.location?.trim()
+
+    if (!location) {
+      return accumulator
+    }
+
+    accumulator[location] = (accumulator[location] ?? 0) + 1
+    return accumulator
+  }, {})
+
+  const favoriteLocation =
+    Object.entries(locationCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "Sin datos"
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
-        <h1 className="text-2xl font-semibold">Hola 👋 ¿Qué haremos hoy?</h1>
-        <p className="text-sm text-gray-600">Elige una acción rápida para empezar.</p>
+    <div>
+      <section className="space-y-1">
+        <p className="text-sm text-white/60">Hola 👋</p>
+        <h1 className="text-3xl font-semibold text-white">¿Qué haremos hoy?</h1>
       </section>
 
-      <section className="flex gap-3">
+      <section className="mt-4 flex gap-3">
         <Button
           asChild
           variant="primary"
           size="md"
-          className="px-4 py-3"
+          className="px-4 py-3 shadow-[0_18px_40px_rgba(88,255,138,0.25)]"
         >
           <Link href="/toni">Hablar con Toni</Link>
         </Button>
@@ -68,20 +84,27 @@ export default function HomePage() {
         </Button>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Mi Jardín</h2>
+      <section className="mt-6 grid grid-cols-2 gap-3">
+        <MetricTile icon="🌱" label="Plantas" value={totalPlants} />
+        <MetricTile icon="💧" label="Riegos hoy" value={2} />
+        <MetricTile icon="📍" label="Ubicación favorita" value={favoriteLocation} />
+        <MetricTile icon="🔥" label="Streak" value="5 días" />
+      </section>
+
+      <section className="mt-8 space-y-4">
+        <h2 className="text-lg font-semibold text-white">Mi Jardín</h2>
 
         {isLoading ? (
           <div className="space-y-3" aria-busy="true" aria-live="polite">
-            <div className="h-20 animate-pulse rounded-2xl border bg-white" />
-            <div className="h-20 animate-pulse rounded-2xl border bg-white" />
+            <div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+            <div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
           </div>
         ) : null}
 
         {!isLoading && error ? (
           <div
             role="alert"
-            className="space-y-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm"
+            className="space-y-2 rounded-2xl border border-red-300/30 bg-red-500/10 p-4 text-red-100 shadow-lg"
           >
             <p className="text-sm">{error}</p>
             <button
@@ -89,7 +112,7 @@ export default function HomePage() {
               onClick={() => {
                 void loadPlants()
               }}
-              className="inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700"
+              className="inline-flex items-center justify-center rounded-lg border border-red-200/40 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-100"
             >
               Reintentar
             </button>
@@ -97,34 +120,36 @@ export default function HomePage() {
         ) : null}
 
         {!isLoading && !error && plants.length === 0 ? (
-          <div className="bg-white border rounded-2xl shadow-sm p-4 space-y-2">
-            <p className="font-medium">Aún no tienes plantas 🌿</p>
-            <p className="text-sm text-gray-600">
+          <Card>
+            <CardContent className="space-y-2">
+              <p className="font-medium text-white">Aún no tienes plantas 🌿</p>
+              <p className="text-sm text-white/70">
               Crea tu primera planta para empezar a llevar seguimiento.
-            </p>
-            <Link href="/garden/new" className="text-sm font-medium text-green-700">
-              Crear mi primera planta
-            </Link>
-          </div>
+              </p>
+              <Link href="/garden/new" className="text-sm font-medium text-green-300">
+                Crear mi primera planta
+              </Link>
+            </CardContent>
+          </Card>
         ) : null}
 
         {!isLoading && !error && plants.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {previewPlants.map((plant) => (
               <Card key={plant.id}>
                 <CardContent className="space-y-1">
-                  <p className="font-semibold">{plant.nickname}</p>
+                  <p className="font-semibold text-white">{plant.nickname}</p>
                   {plant.species_common ? (
-                    <p className="text-sm text-gray-600">{plant.species_common}</p>
+                    <p className="text-sm text-white/70">{plant.species_common}</p>
                   ) : null}
                   {plant.location ? (
-                    <p className="text-sm text-gray-600">{plant.location}</p>
+                    <p className="text-sm text-white/70">{plant.location}</p>
                   ) : null}
                 </CardContent>
               </Card>
             ))}
 
-            <Link href="/garden" className="text-sm font-medium text-green-700">
+            <Link href="/garden" className="text-sm font-medium text-green-300">
               Ver mi jardín
             </Link>
           </div>

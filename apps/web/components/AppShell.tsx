@@ -18,7 +18,7 @@ export default function AppShell({ title, children }: AppShellProps) {
       <Header title={title} />
 
       <main
-        className="mx-auto mt-3 max-w-md rounded-[var(--radius-6)] border border-border-weak bg-surface-glass-2 px-4 py-4 shadow-3 backdrop-blur-md"
+        className="mx-auto mt-3 flex max-w-md flex-col space-y-6 px-4"
         style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
       >
         {children}

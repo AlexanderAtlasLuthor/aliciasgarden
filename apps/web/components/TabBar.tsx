@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import GlassSurface from "@/components/ui/GlassSurface"
 import { TABS } from "@/lib/nav"
 
 export default function TabBar() {
@@ -17,25 +18,29 @@ export default function TabBar() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
-      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 gap-1.5 rounded-[var(--radius-6)] border border-border-weak bg-surface-glass-2 p-2 shadow-4 backdrop-blur-lg">
-        {TABS.map((tab) => {
-          const isActive = isTabActive(tab.href)
+    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-md px-3">
+        <GlassSurface className="pointer-events-auto rounded-[24px] px-4 py-2" variant="strong">
+          <div className="flex items-center justify-between gap-1">
+            {TABS.map((tab) => {
+              const isActive = isTabActive(tab.href)
 
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`flex min-h-11 items-center justify-center rounded-[var(--radius-3)] px-2 py-2 text-[0.78rem] font-medium tracking-[0.01em] transition duration-200 ${
-                isActive
-                  ? "bg-[linear-gradient(135deg,var(--brand-300),var(--brand-600))] text-neutral-0 shadow-brand"
-                  : "text-neutral-700 hover:bg-neutral-0/40 hover:text-neutral-900"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          )
-        })}
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={`flex min-h-9 items-center justify-center px-3 py-1 text-[0.78rem] font-medium tracking-[0.01em] transition duration-200 ${
+                    isActive
+                      ? "rounded-full bg-white/10 text-white"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              )
+            })}
+          </div>
+        </GlassSurface>
       </div>
     </div>
   )

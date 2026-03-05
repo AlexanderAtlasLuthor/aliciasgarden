@@ -7,13 +7,13 @@ type ButtonSize = "sm" | "md"
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "border border-brand-500/35 bg-[linear-gradient(135deg,var(--brand-500),var(--brand-700))] text-neutral-0 shadow-brand hover:brightness-105 active:brightness-95 focus-visible:ring-brand-500",
+    "border border-ag-borderA bg-gradient-to-br from-ag-brand2 to-ag-brandDeep text-ag-ink shadow-agGlow hover:brightness-110 active:brightness-95",
   secondary:
-    "border border-border-md bg-surface-glass-3 text-neutral-900 shadow-1 backdrop-blur-sm hover:bg-neutral-0/85 active:bg-neutral-0/75 focus-visible:ring-brand-500",
+    "border border-ag-borderB bg-ag-glass1 text-white/85 shadow-ag1 backdrop-blur-ag hover:bg-ag-glass2 active:bg-ag-glass3",
   ghost:
-    "border border-border-weak bg-neutral-0/15 text-brand-800 backdrop-blur-sm hover:bg-neutral-0/35 active:bg-neutral-0/20 focus-visible:ring-brand-500",
+    "border border-ag-borderB bg-ag-glass1 text-white/85 backdrop-blur-ag hover:bg-ag-glass2 active:bg-ag-glass3",
   danger:
-    "border border-red-600/35 bg-[linear-gradient(135deg,#de4b41,#b42318)] text-neutral-0 shadow-2 hover:brightness-105 active:brightness-95 focus-visible:ring-red-500",
+    "border border-red-300/40 bg-[linear-gradient(135deg,#de4b41,#b42318)] text-ag-ink shadow-ag1 hover:brightness-105 active:brightness-95",
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -41,8 +41,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   ref
 ) {
   const buttonClasses = cn(
-    "inline-flex items-center justify-center rounded-[var(--radius-3)] font-semibold tracking-[0.01em] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-60",
-    disabled && "pointer-events-none opacity-60",
+    "inline-flex items-center justify-center rounded-[var(--radius-3)] font-semibold tracking-[0.01em] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ag-brand-ring-40)] focus-visible:ring-offset-0 active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50",
+    disabled && "pointer-events-none opacity-50",
     variantClasses[variant],
     sizeClasses[size],
     className

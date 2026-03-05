@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react"
 
 import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
+import GlassSurface from "@/components/ui/GlassSurface"
 import Input from "@/components/ui/Input"
 import { getThreadMessages, getThreads, sendChatMessage } from "@/lib/api"
 
@@ -152,14 +153,14 @@ export default function ToniPage() {
 
       <section className="space-y-3">
         {messages.length === 0 ? (
-          <Card>
-            <CardContent className="space-y-1">
+          <GlassSurface className="p-4" variant="strong">
+            <div className="space-y-1">
               <p className="font-medium">Pregúntale algo a Toni</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white/70">
                 Pide ayuda con riego, luz o cuidados de tus plantas.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassSurface>
         ) : (
           messages.map((message, index) => (
             <div
@@ -167,11 +168,11 @@ export default function ToniPage() {
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {message.role === "assistant" ? (
-                <Card className="max-w-[85%]">
-                  <CardContent className="text-sm">{message.content}</CardContent>
-                </Card>
+                <GlassSurface className="max-w-[80%] p-[14px]" variant="strong">
+                  <p className="text-sm text-white">{message.content}</p>
+                </GlassSurface>
               ) : (
-                <div className="max-w-[85%] rounded-full border border-ag-border bg-ag-bg px-4 py-2 text-sm text-ag-text shadow-sm">
+                <div className="max-w-[80%] rounded-full border border-green-300/20 bg-green-500/20 px-[14px] py-[10px] text-sm text-white">
                   {message.content}
                 </div>
               )}
@@ -181,9 +182,9 @@ export default function ToniPage() {
 
         {isSending ? (
           <div className="flex justify-start" aria-live="polite">
-            <Card className="max-w-[85%]">
-              <CardContent className="text-sm text-gray-600">Toni está escribiendo...</CardContent>
-            </Card>
+            <GlassSurface className="max-w-[80%] p-[14px]" variant="strong">
+              <p className="text-sm text-white/70">Toni está escribiendo...</p>
+            </GlassSurface>
           </div>
         ) : null}
 

@@ -1,6 +1,33 @@
 @import "tailwindcss";
 
 :root {
+	--ag-bg0: #04160d;
+	--ag-bg1: #052012;
+	--ag-ink: #f6fff9;
+	--ag-ink-muted: rgba(246, 255, 249, 0.72);
+	--ag-ink-faint: rgba(246, 255, 249, 0.52);
+
+	--ag-brand: #58ff8a;
+	--ag-brand-2: #1fd36b;
+	--ag-brand-deep: #0a7a3e;
+	--ag-glow: rgba(88, 255, 138, 0.28);
+
+	--ag-glass-1: rgba(255, 255, 255, 0.06);
+	--ag-glass-2: rgba(255, 255, 255, 0.09);
+	--ag-glass-3: rgba(255, 255, 255, 0.12);
+	--ag-border-a: rgba(255, 255, 255, 0.14);
+	--ag-border-b: rgba(255, 255, 255, 0.1);
+
+	--ag-shadow-1: 0 10px 30px rgba(0, 0, 0, 0.35);
+	--ag-shadow-2: 0 18px 60px rgba(0, 0, 0, 0.45);
+	--ag-shadow-glow:
+		0 0 0 1px rgba(88, 255, 138, 0.12),
+		0 18px 80px rgba(88, 255, 138, 0.12);
+	--ag-blur: 18px;
+	--ag-radius: 20px;
+	--ag-brand-ring-40: rgba(88, 255, 138, 0.4);
+	--ag-brand-ring-25: rgba(88, 255, 138, 0.25);
+
 	--brand-50: #f4fbe8;
 	--brand-100: #e8f6d0;
 	--brand-200: #d6eeaa;
@@ -55,33 +82,62 @@
 	--ag-primary: var(--brand-700);
 	--ag-accent: var(--brand-400);
 	--ag-deep: var(--brand-900);
-	--ag-ink: var(--neutral-900);
-	--ag-bg: var(--neutral-100);
-	--ag-glass: var(--surface-glass-2);
-	--ag-glass-border: var(--border-alpha-weak);
-	--ag-shadow-lg: var(--shadow-3);
-	--ag-shadow-md: var(--shadow-2);
-	--ag-radius-lg: var(--radius-5);
+	--ag-bg: var(--ag-bg1);
+	--ag-glass: var(--ag-glass-2);
+	--ag-glass-border: var(--ag-border-a);
+	--ag-shadow-lg: var(--ag-shadow-2);
+	--ag-shadow-md: var(--ag-shadow-1);
+	--ag-radius-lg: var(--ag-radius);
 	--ag-radius-md: var(--radius-3);
-	--ag-blur: blur(var(--blur-md));
 	--ag-primary-600: var(--brand-800);
 	--ag-secondary: var(--brand-300);
-	--ag-surface: var(--neutral-0);
-	--ag-text: var(--neutral-900);
-	--ag-border: rgba(37, 51, 40, 0.14);
+	--ag-surface: var(--ag-glass-1);
+	--ag-text: var(--ag-ink);
+	--ag-border: var(--ag-border-b);
 	--ag-danger: #b42318;
 }
 
 body {
 	background:
-		radial-gradient(900px circle at 12% -5%, rgba(169, 220, 83, 0.34), transparent 58%),
-		radial-gradient(780px circle at 92% 14%, rgba(71, 146, 58, 0.14), transparent 60%),
-		linear-gradient(180deg, #f6fbf5 0%, #eef5f1 100%);
-	min-height: 100vh;
-	color: var(--neutral-900);
+		radial-gradient(1000px circle at 10% -10%, rgba(88, 255, 138, 0.22), transparent 55%),
+		radial-gradient(860px circle at 100% 8%, rgba(31, 211, 107, 0.17), transparent 58%),
+		radial-gradient(620px circle at 50% 120%, rgba(255, 198, 120, 0.09), transparent 62%),
+		linear-gradient(180deg, var(--ag-bg0) 0%, var(--ag-bg1) 100%);
+	min-height: 100dvh;
+	color: var(--ag-ink);
 	font-family:
 		var(--font-geist-sans),
 		"Manrope",
 		"Segoe UI",
 		sans-serif;
+	-webkit-font-smoothing: antialiased;
+}
+
+::selection {
+	background: rgba(88, 255, 138, 0.25);
+	color: #ffffff;
+}
+
+:where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])):focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--ag-brand-ring-25);
+}
+
+.ag-glass {
+	background: var(--ag-glass-2);
+	backdrop-filter: blur(var(--ag-blur));
+	-webkit-backdrop-filter: blur(var(--ag-blur));
+	border: 1px solid var(--ag-border-a);
+	box-shadow: var(--ag-shadow-1);
+	border-radius: var(--ag-radius);
+}
+
+.ag-glass-strong {
+	background: var(--ag-glass-3);
+	border-color: var(--ag-border-a);
+	box-shadow: var(--ag-shadow-2);
+}
+
+.ag-glow {
+	box-shadow: var(--ag-shadow-glow);
 }

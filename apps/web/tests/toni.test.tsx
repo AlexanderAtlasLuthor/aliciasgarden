@@ -29,6 +29,8 @@ function deferred<T>() {
 
 describe("toni chat", () => {
   beforeEach(() => {
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+
     mockedGetThreads.mockReset()
     mockedGetThreadMessages.mockReset()
     mockedSendChatMessage.mockReset()
@@ -85,5 +87,27 @@ describe("toni chat", () => {
     })
     expect(await screen.findByText("Ya funciono")).toBeInTheDocument()
     expect(screen.getAllByText("Necesito ayuda")).toHaveLength(1)
+  })
+
+  it("normalizes markdown-like assistant output and clears chat on demand", async () => {
+    const user = userEvent.setup()
+    mockedSendChatMessage.mockResolvedValueOnce({
+      thread_id: "thread-1",
+      reply: "**Riega hoy**\n* mañana revisa\n`humedad`"
+    })
+
+    render(<ToniPage />)
+
+    const input = screen.getByPlaceholderText("Escribe tu mensaje...")
+    await user.type(input, "Tengo dudas")
+    await user.click(screen.getByRole("button", { name: "Enviar" }))
+
+    expect(await screen.findByText(/Riega hoy/i)).toBeInTheDocument()
+    expect(screen.getByText(/- mañana revisa/i)).toBeInTheDocument()
+    expect(screen.getByText(/humedad/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Limpiar chat" }))
+
+    expect(screen.getByText("Pregúntale algo a Toni")).toBeInTheDocument()
   })
 })

@@ -13,6 +13,14 @@ type UiMessage = {
   content: string
 }
 
+function normalizeAssistantText(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*\*\s+/gm, "- ")
+}
+
 export default function ToniPage() {
   const [threadId, setThreadId] = useState<string | null>(null)
   const [messages, setMessages] = useState<UiMessage[]>([])
@@ -133,6 +141,19 @@ export default function ToniPage() {
     await sendMessage(lastUserMessage, false)
   }
 
+  const handleClearChat = () => {
+    if (!window.confirm("¿Borrar conversación?")) {
+      return
+    }
+
+    setMessages([])
+    setThreadId(null)
+    setLoadError(null)
+    setSendError(null)
+    setLastUserMessage(null)
+    localStorage.removeItem("ag_thread_id")
+  }
+
   return (
     <div className="ag-container ag-screen">
       <div
@@ -140,7 +161,16 @@ export default function ToniPage() {
         style={{ paddingBottom: "calc(9.5rem + env(safe-area-inset-bottom))" }}
       >
         <section className="space-y-1">
-          <h1 className="text-primary text-2xl font-semibold tracking-tight">Toni</h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-primary text-2xl font-semibold tracking-tight">Toni</h1>
+            <button
+              type="button"
+              onClick={handleClearChat}
+              className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-white/80 transition hover:bg-white/10"
+            >
+              Limpiar chat
+            </button>
+          </div>
           <p className="text-secondary text-sm">Tu asistente para cuidar mejor tus plantas.</p>
         </section>
 
@@ -170,7 +200,7 @@ export default function ToniPage() {
               >
                 {message.role === "assistant" ? (
                   <div className="max-w-[85%] rounded-[30px] border border-white/20 bg-[#355f54] px-[14px] py-[12px] md:max-w-[65%]">
-                    <p className="text-primary text-sm">{message.content}</p>
+                    <p className="text-primary text-sm">{normalizeAssistantText(message.content)}</p>
                   </div>
                 ) : (
                   <div className="text-primary max-w-[85%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm md:max-w-[65%]">

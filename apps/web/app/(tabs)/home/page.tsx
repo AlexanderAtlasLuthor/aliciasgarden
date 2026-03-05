@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
+import Button from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
 import { getPlants, type Plant } from "@/lib/api"
 
 export default function HomePage() {
@@ -48,18 +50,22 @@ export default function HomePage() {
       </section>
 
       <section className="flex gap-3">
-        <Link
-          href="/toni"
-          className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-medium bg-green-600 text-white"
+        <Button
+          asChild
+          variant="primary"
+          size="md"
+          className="px-4 py-3"
         >
-          Hablar con Toni
-        </Link>
-        <Link
-          href="/garden/new"
-          className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-medium bg-white border text-gray-900"
+          <Link href="/toni">Hablar con Toni</Link>
+        </Button>
+        <Button
+          asChild
+          variant="ghost"
+          size="md"
+          className="px-4 py-3 text-ag-text"
         >
-          Añadir planta
-        </Link>
+          <Link href="/garden/new">Añadir planta</Link>
+        </Button>
       </section>
 
       <section className="space-y-3">
@@ -105,18 +111,17 @@ export default function HomePage() {
         {!isLoading && !error && plants.length > 0 ? (
           <div className="space-y-3">
             {previewPlants.map((plant) => (
-              <article
-                key={plant.id}
-                className="bg-white border rounded-2xl shadow-sm p-4 space-y-1"
-              >
-                <p className="font-semibold">{plant.nickname}</p>
-                {plant.species_common ? (
-                  <p className="text-sm text-gray-600">{plant.species_common}</p>
-                ) : null}
-                {plant.location ? (
-                  <p className="text-sm text-gray-600">{plant.location}</p>
-                ) : null}
-              </article>
+              <Card key={plant.id}>
+                <CardContent className="space-y-1">
+                  <p className="font-semibold">{plant.nickname}</p>
+                  {plant.species_common ? (
+                    <p className="text-sm text-gray-600">{plant.species_common}</p>
+                  ) : null}
+                  {plant.location ? (
+                    <p className="text-sm text-gray-600">{plant.location}</p>
+                  ) : null}
+                </CardContent>
+              </Card>
             ))}
 
             <Link href="/garden" className="text-sm font-medium text-green-700">

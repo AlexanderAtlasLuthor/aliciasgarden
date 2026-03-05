@@ -1,3 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+:root {
+	--ag-primary: #2f7a45;
+	--ag-primary-600: #2f7a45;
+	--ag-secondary: #8fbf9e;
+	--ag-bg: #f5f8f3;
+	--ag-surface: #ffffff;
+	--ag-text: #1e2a22;
+	--ag-border: #d7e2d8;
+	--ag-danger: #b42318;
+}
+
+body {
+	background: var(--ag-bg);
+	color: var(--ag-text);
+}

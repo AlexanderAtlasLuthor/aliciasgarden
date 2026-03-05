@@ -43,11 +43,13 @@ npm -C apps/web run dev
 npm -C apps/web run lint
 npm -C apps/web run typecheck
 npm -C apps/web run test
+npm -C apps/web run test:watch
 npm -C apps/web run build
 npm -C apps/web run start
 ```
 
 Notas:
 
-- `test` es un placeholder temporal y no ejecuta suite de tests todavia.
+- `test` ejecuta la suite de Vitest en modo CI (`vitest run`).
+- `test:watch` ejecuta Vitest en modo interactivo.
 - `build` valida compilacion de produccion y chequeo de tipos de Next.

@@ -30,6 +30,7 @@ function deferred<T>() {
 describe("toni chat", () => {
   beforeEach(() => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
+    localStorage.clear()
 
     mockedGetThreads.mockReset()
     mockedGetThreadMessages.mockReset()
@@ -37,6 +38,24 @@ describe("toni chat", () => {
 
     mockedGetThreads.mockResolvedValue([])
     mockedGetThreadMessages.mockResolvedValue([])
+  })
+
+  it("keeps chat cleared after reload", async () => {
+    localStorage.setItem("ag_chat_cleared", "1")
+    mockedGetThreads.mockResolvedValueOnce([
+      {
+        id: "thread-should-not-load",
+        profile_id: "profile-1",
+        title: null,
+        created_at: "2026-03-05T00:00:00.000Z"
+      }
+    ])
+
+    render(<ToniPage />)
+
+    expect(await screen.findByText("Pregúntale algo a Toni")).toBeInTheDocument()
+    expect(mockedGetThreads).not.toHaveBeenCalled()
+    expect(mockedGetThreadMessages).not.toHaveBeenCalled()
   })
 
   it("sends a message, calls API, and shows typing state while pending", async () => {

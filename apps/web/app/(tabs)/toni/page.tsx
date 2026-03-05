@@ -13,6 +13,9 @@ type UiMessage = {
   content: string
 }
 
+const THREAD_STORAGE_KEY = "ag_thread_id"
+const CLEARED_STORAGE_KEY = "ag_chat_cleared"
+
 function normalizeAssistantText(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -35,6 +38,32 @@ export default function ToniPage() {
   useEffect(() => {
     const loadInitialThread = async () => {
       try {
+        const storedThreadId = localStorage.getItem(THREAD_STORAGE_KEY)
+        const wasCleared = localStorage.getItem(CLEARED_STORAGE_KEY) === "1"
+
+        if (storedThreadId?.trim()) {
+          setThreadId(storedThreadId)
+
+          const threadMessages = await getThreadMessages(storedThreadId)
+          const uiMessages: UiMessage[] = []
+
+          for (const message of threadMessages) {
+            if (message.role === "user" || message.role === "assistant") {
+              uiMessages.push({
+                role: message.role,
+                content: message.content
+              })
+            }
+          }
+
+          setMessages(uiMessages)
+          return
+        }
+
+        if (wasCleared) {
+          return
+        }
+
         const threads = await getThreads()
         if (threads.length === 0) {
           return
@@ -42,6 +71,7 @@ export default function ToniPage() {
 
         const firstThreadId = threads[0].id
         setThreadId(firstThreadId)
+        localStorage.setItem(THREAD_STORAGE_KEY, firstThreadId)
 
         const threadMessages = await getThreadMessages(firstThreadId)
         const uiMessages: UiMessage[] = []
@@ -98,6 +128,8 @@ export default function ToniPage() {
       })
 
       setThreadId(result.thread_id)
+      localStorage.setItem(THREAD_STORAGE_KEY, result.thread_id)
+      localStorage.removeItem(CLEARED_STORAGE_KEY)
       setMessages((current) => [
         ...current,
         { role: "assistant", content: result.reply }
@@ -151,7 +183,8 @@ export default function ToniPage() {
     setLoadError(null)
     setSendError(null)
     setLastUserMessage(null)
-    localStorage.removeItem("ag_thread_id")
+    localStorage.removeItem(THREAD_STORAGE_KEY)
+    localStorage.setItem(CLEARED_STORAGE_KEY, "1")
   }
 
   return (
@@ -184,7 +217,11 @@ export default function ToniPage() {
 
         <section className="max-h-[46dvh] space-y-3 overflow-y-auto pr-1">
           {messages.length === 0 ? (
-            <GlassSurface className="p-4" variant="strong">
+            <GlassSurface
+              className="p-4"
+              variant="medium"
+              style={{ boxShadow: "none", filter: "none" }}
+            >
               <div className="space-y-1">
                 <p className="text-primary font-medium">Pregúntale algo a Toni</p>
                 <p className="text-secondary text-sm">

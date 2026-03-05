@@ -127,17 +127,18 @@ export default function NewPlantPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
-        <h1 className="text-2xl font-semibold">Añadir planta</h1>
-        <p className="text-sm text-gray-600">
-          Completa lo básico. Puedes editar más adelante.
-        </p>
-      </section>
+    <div className="ag-container ag-screen">
+      <div className="ag-panel space-y-6">
+        <section className="space-y-2">
+          <h1 className="text-primary text-2xl font-semibold tracking-tight">Añadir planta</h1>
+          <p className="text-secondary text-sm">
+            Completa lo básico. Puedes editar más adelante.
+          </p>
+        </section>
 
-      <Card>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4" aria-live="polite">
+        <Card>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4" aria-live="polite">
             {submitError ? (
               <Card
                 role="alert"
@@ -153,7 +154,7 @@ export default function NewPlantPage() {
             ) : null}
 
             <div className="space-y-1">
-              <label htmlFor="nickname" className="text-sm font-medium text-gray-900">
+              <label htmlFor="nickname" className="text-primary text-sm font-medium">
                 Nombre (nickname)
               </label>
               <Input
@@ -178,7 +179,7 @@ export default function NewPlantPage() {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="species_common" className="text-sm font-medium text-gray-900">
+              <label htmlFor="species_common" className="text-primary text-sm font-medium">
                 Especie común
               </label>
               <Input
@@ -190,7 +191,7 @@ export default function NewPlantPage() {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="location" className="text-sm font-medium text-gray-900">
+              <label htmlFor="location" className="text-primary text-sm font-medium">
                 Ubicación
               </label>
               <Input
@@ -202,7 +203,7 @@ export default function NewPlantPage() {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="light" className="text-sm font-medium text-gray-900">
+              <label htmlFor="light" className="text-primary text-sm font-medium">
                 Luz
               </label>
               <Input
@@ -216,7 +217,7 @@ export default function NewPlantPage() {
             <div className="space-y-1">
               <label
                 htmlFor="watering_interval_days"
-                className="text-sm font-medium text-gray-900"
+                className="text-primary text-sm font-medium"
               >
                 Intervalo de riego (días)
               </label>
@@ -253,14 +254,14 @@ export default function NewPlantPage() {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="notes" className="text-sm font-medium text-gray-900">
+              <label htmlFor="notes" className="text-primary text-sm font-medium">
                 Notas
               </label>
               <textarea
                 id="notes"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                className="w-full rounded-xl border border-ag-border bg-ag-surface px-3 py-2 text-sm text-ag-text outline-none transition focus-visible:ring-2 focus-visible:ring-ag-primary focus-visible:ring-offset-1"
+                className="glass-soft text-primary placeholder-hairline w-full rounded-xl px-3 py-2 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ag-primary focus-visible:ring-offset-1"
                 rows={4}
               />
             </div>
@@ -268,9 +269,10 @@ export default function NewPlantPage() {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Guardando..." : "Guardar planta"}
             </Button>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

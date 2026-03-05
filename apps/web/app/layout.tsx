@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Alicia's Garden",
   description: "Alicia's Garden: organiza tu jardín, registra tus plantas y recibe ayuda de Toni.",
+  icons: {
+    icon: "/AG Logo.png",
+    shortcut: "/AG Logo.png",
+    apple: "/AG Logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div id="AG_APP_ROOT">{children}</div>
       </body>
     </html>
   );

@@ -48,6 +48,11 @@ const config: Config = {
           strong: "var(--border-alpha-strong)",
         },
         danger: "var(--ag-danger)",
+        text: {
+          primary: "var(--ag-text)",
+          muted: "var(--ag-muted)",
+          hairline: "var(--ag-hairline)",
+        },
         ag: {
           bg0: "var(--ag-bg0)",
           bg1: "var(--ag-bg1)",
@@ -76,6 +81,13 @@ const config: Config = {
           text: "var(--ag-text)",
           danger: "var(--ag-danger)",
         },
+      },
+      fontSize: {
+        "ag-title": ["1.625rem", { lineHeight: "2rem", fontWeight: "700" }],
+        "ag-h2": ["1.25rem", { lineHeight: "1.75rem", fontWeight: "700" }],
+        "ag-h3": ["1rem", { lineHeight: "1.45rem", fontWeight: "650" }],
+        "ag-body": ["0.875rem", { lineHeight: "1.3rem" }],
+        "ag-caption": ["0.75rem", { lineHeight: "1.05rem" }],
       },
       borderRadius: {
         1: "var(--radius-1)",

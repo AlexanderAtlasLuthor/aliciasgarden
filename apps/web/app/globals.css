@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+	--ag-font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+	--ag-text: rgba(255, 255, 255, 0.92);
+	--ag-muted: rgba(255, 255, 255, 0.66);
+	--ag-hairline: rgba(255, 255, 255, 0.44);
+
 	--ag-bg0: #04160d;
 	--ag-bg1: #052012;
 	--ag-ink: #f6fff9;
@@ -15,8 +20,24 @@
 	--ag-glass-1: rgba(255, 255, 255, 0.06);
 	--ag-glass-2: rgba(255, 255, 255, 0.09);
 	--ag-glass-3: rgba(255, 255, 255, 0.12);
+	--ag-glass-strong: rgba(255, 255, 255, 0.14);
+	--ag-glass-medium: rgba(255, 255, 255, 0.1);
+	--ag-glass-soft: rgba(255, 255, 255, 0.06);
 	--ag-border-a: rgba(255, 255, 255, 0.14);
 	--ag-border-b: rgba(255, 255, 255, 0.1);
+	--ag-border-strong: rgba(255, 255, 255, 0.22);
+	--ag-border-soft: rgba(255, 255, 255, 0.12);
+	--ag-text-primary: rgba(255, 255, 255, 0.92);
+	--ag-text-secondary: rgba(255, 255, 255, 0.7);
+	--ag-text-muted: rgba(255, 255, 255, 0.5);
+	--ag-text-hairline: rgba(255, 255, 255, 0.35);
+	--ag-bg-base-1: #03140d;
+	--ag-bg-base-2: #052a1a;
+	--ag-aurora-1: rgba(46, 240, 155, 0.16);
+	--ag-aurora-2: rgba(0, 180, 140, 0.14);
+	--ag-aurora-3: rgba(0, 120, 255, 0.1);
+	--ag-highlight: rgba(255, 255, 255, 0.06);
+	--ag-noise-opacity: 0.06;
 
 	--ag-shadow-1: 0 10px 30px rgba(0, 0, 0, 0.35);
 	--ag-shadow-2: 0 18px 60px rgba(0, 0, 0, 0.45);
@@ -83,8 +104,8 @@
 	--ag-accent: var(--brand-400);
 	--ag-deep: var(--brand-900);
 	--ag-bg: var(--ag-bg1);
-	--ag-glass: var(--ag-glass-2);
-	--ag-glass-border: var(--ag-border-a);
+	--ag-glass: rgba(255, 255, 255, 0.08);
+	--ag-glass-border: rgba(255, 255, 255, 0.14);
 	--ag-shadow-lg: var(--ag-shadow-2);
 	--ag-shadow-md: var(--ag-shadow-1);
 	--ag-radius-lg: var(--ag-radius);
@@ -98,21 +119,37 @@
 }
 
 body {
+	position: relative;
 	background:
-		radial-gradient(980px circle at 10% -12%, rgba(92, 255, 174, 0.2), transparent 54%),
-		radial-gradient(920px circle at 102% 10%, rgba(36, 196, 122, 0.2), transparent 58%),
-		radial-gradient(720px circle at 46% 112%, rgba(9, 78, 48, 0.42), transparent 62%),
-		repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px),
-		linear-gradient(180deg, var(--ag-bg0) 0%, var(--ag-bg1) 100%);
+		radial-gradient(1200px 600px at 50% -10%, var(--ag-highlight), transparent 60%),
+		radial-gradient(900px 700px at 20% 10%, var(--ag-aurora-1), transparent 65%),
+		radial-gradient(900px 700px at 80% 20%, var(--ag-aurora-2), transparent 65%),
+		radial-gradient(900px 700px at 50% 90%, var(--ag-aurora-3), transparent 70%),
+		linear-gradient(180deg, var(--ag-bg-base-1), var(--ag-bg-base-2));
 	min-height: 100dvh;
-	color: rgba(255, 255, 255, 0.86);
-	font-family:
-		var(--font-geist-sans),
-		"Manrope",
-		"Segoe UI",
-		sans-serif;
+	color: var(--ag-text);
+	font-family: var(--ag-font-sans);
+	font-size: 15px;
 	-webkit-font-smoothing: antialiased;
-	text-rendering: optimizeLegibility;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: geometricPrecision;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	opacity: var(--ag-noise-opacity);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+	background-size: 160px 160px;
+	mix-blend-mode: overlay;
+}
+
+#AG_APP_ROOT {
+	position: relative;
+	z-index: 1;
 }
 
 ::selection {
@@ -153,4 +190,91 @@ body {
 
 .ag-glow {
 	box-shadow: var(--ag-shadow-glow);
+}
+
+.glass-strong {
+	background: var(--ag-glass-strong);
+	backdrop-filter: blur(22px);
+	-webkit-backdrop-filter: blur(22px);
+	border: 1px solid var(--ag-border-strong);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.glass-medium {
+	background: var(--ag-glass-medium);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	border: 1px solid var(--ag-border-soft);
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+.glass-soft {
+	background: var(--ag-glass-soft);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.text-primary {
+	color: var(--ag-text-primary);
+}
+
+.text-secondary {
+	color: var(--ag-text-secondary);
+}
+
+.text-muted {
+	color: var(--ag-text-muted);
+}
+
+.text-hairline {
+	color: var(--ag-text-hairline);
+}
+
+.placeholder-hairline::placeholder {
+	color: var(--ag-text-hairline);
+}
+
+.ag-truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ag-balance {
+	text-wrap: balance;
+}
+
+/* Premium layout helpers */
+.ag-container {
+	width: 100%;
+	max-width: 28rem;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.ag-screen {
+	padding-top: 1rem;
+	padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+.ag-panel {
+	border-radius: 2rem;
+	padding: 1.25rem;
+	background: var(--ag-glass);
+	border: 1px solid var(--ag-glass-border);
+	backdrop-filter: blur(var(--ag-blur));
+	-webkit-backdrop-filter: blur(var(--ag-blur));
+	box-shadow: var(--ag-shadow-lg);
+}
+
+.ag-section {
+	margin-top: 1.25rem;
+}
+
+.ag-divider {
+	height: 1px;
+	width: 100%;
+	background: rgba(255, 255, 255, 0.08);
 }

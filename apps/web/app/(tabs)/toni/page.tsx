@@ -134,110 +134,120 @@ export default function ToniPage() {
   }
 
   return (
-    <div
-      className="space-y-4"
-      style={{ paddingBottom: "calc(10rem + env(safe-area-inset-bottom))" }}
-    >
-      <section className="space-y-1">
-        <h1 className="text-2xl font-semibold text-white">Toni</h1>
-        <p className="text-sm text-white/65">Tu asistente para cuidar mejor tus plantas.</p>
-      </section>
+    <div className="ag-container ag-screen">
+      <div
+        className="ag-panel space-y-4"
+        style={{ paddingBottom: "calc(12rem + env(safe-area-inset-bottom))" }}
+      >
+        <section className="space-y-1">
+          <h1 className="text-primary text-2xl font-semibold tracking-tight">Toni</h1>
+          <p className="text-secondary text-sm">Tu asistente para cuidar mejor tus plantas.</p>
+        </section>
 
-      {loadError ? (
-        <Card className="border-red-400/35 bg-red-500/10" role="alert">
-          <CardContent>
-            <p className="text-sm text-white/80">{loadError}</p>
-          </CardContent>
-        </Card>
-      ) : null}
+        {loadError ? (
+          <Card className="border-red-400/35 bg-red-500/10" role="alert">
+            <CardContent>
+              <p className="text-sm text-white/80">{loadError}</p>
+            </CardContent>
+          </Card>
+        ) : null}
 
-      <section className="space-y-3">
-        {messages.length === 0 ? (
-          <GlassSurface className="p-4" variant="strong">
-            <div className="space-y-1">
-              <p className="font-medium">Pregúntale algo a Toni</p>
-              <p className="text-sm text-white/70">
-                Pide ayuda con riego, luz o cuidados de tus plantas.
-              </p>
-            </div>
-          </GlassSurface>
-        ) : (
-          messages.map((message, index) => (
-            <div
-              key={`${message.role}-${index}`}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              {message.role === "assistant" ? (
-                <GlassSurface className="max-w-[80%] p-[14px] shadow-glass" variant="strong">
-                  <p className="text-sm text-white">{message.content}</p>
-                </GlassSurface>
-              ) : (
-                <div className="max-w-[80%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm text-white">
-                  {message.content}
-                </div>
-              )}
-            </div>
-          ))
-        )}
-
-        {isSending ? (
-          <div className="flex justify-start" aria-live="polite">
-            <GlassSurface className="max-w-[80%] animate-pulse p-[14px]" variant="strong">
-              <p className="text-sm text-white/70">Toni está escribiendo...</p>
+        <section className="space-y-3">
+          {messages.length === 0 ? (
+            <GlassSurface className="p-4" variant="strong">
+              <div className="space-y-1">
+                <p className="text-primary font-medium">Pregúntale algo a Toni</p>
+                <p className="text-secondary text-sm">
+                  Pide ayuda con riego, luz o cuidados de tus plantas.
+                </p>
+              </div>
             </GlassSurface>
-          </div>
-        ) : null}
+          ) : (
+            messages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {message.role === "assistant" ? (
+                  <GlassSurface className="max-w-[80%] p-[14px] shadow-glass" variant="strong">
+                    <p className="text-primary text-sm">{message.content}</p>
+                  </GlassSurface>
+                ) : (
+                  <div className="text-primary max-w-[80%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm">
+                    {message.content}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
 
-        {sendError ? (
-          <div className="flex justify-start" role="alert" aria-live="polite">
-            <Card className="max-w-[85%] border-ag-danger bg-red-50 text-sm text-red-700">
-              <CardContent className="space-y-2">
-                <p>{sendError}</p>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    void handleRetry()
-                  }}
-                  disabled={isSending || !lastUserMessage}
-                  variant="danger"
-                  size="sm"
-                >
-                  Reintentar
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
+          {isSending ? (
+            <div className="flex justify-start" aria-live="polite">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-secondary shadow-[0_10px_24px_rgba(0,0,0,0.25)]">
+                <span className="h-2 w-2 rounded-full bg-[rgba(46,240,155,0.65)] shadow-[0_0_12px_rgba(46,240,155,0.25)]" />
+                <span className="opacity-80">Toni está escribiendo...</span>
+                <span className="relative h-2 w-10 overflow-hidden rounded-full bg-white/10">
+                  <span className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent)]" />
+                </span>
+              </div>
+            </div>
+          ) : null}
 
-        <div ref={messagesEndRef} aria-hidden="true" />
-      </section>
+          {sendError ? (
+            <div className="flex justify-start" role="alert" aria-live="polite">
+              <Card className="text-primary max-w-[85%] border border-[rgba(255,80,80,0.18)] bg-[rgba(255,80,80,0.08)] text-sm">
+                <CardContent className="space-y-2">
+                  <p>{sendError}</p>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      void handleRetry()
+                    }}
+                    disabled={isSending || !lastUserMessage}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full border-white/15 bg-white/8 px-3 text-xs font-medium text-white/90 hover:bg-white/12"
+                  >
+                    Reintentar
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+
+          <div ref={messagesEndRef} aria-hidden="true" />
+        </section>
+      </div>
 
       <form
         onSubmit={handleSubmit}
-        className="fixed left-0 right-0 px-4 py-3"
+        className="fixed left-0 right-0 py-3"
         style={{
-          bottom: "calc(3.75rem + env(safe-area-inset-bottom))",
+          bottom: "calc(5rem + env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)"
         }}
       >
-        <div className="mx-auto max-w-md">
-          <GlassSurface className="p-2" variant="strong">
-            <div className="flex gap-2">
+        <div className="ag-container">
+          <div className="relative overflow-hidden rounded-2xl border border-white/12 bg-white/8 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_0%,rgba(46,240,155,0.14),transparent_55%)] before:content-['']">
+            <div className="relative flex items-center gap-2">
               <Input
                 type="text"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="Escribe tu mensaje..."
                 disabled={isSending}
+                className="h-11 w-full rounded-xl border border-transparent bg-transparent px-4 py-3 text-sm text-primary outline-none ring-0 placeholder:text-hairline focus:border-white/10 focus:ring-2 focus:ring-[rgba(46,240,155,0.25)]"
               />
               <Button
                 type="submit"
                 disabled={isSending || !input.trim()}
+                aria-label={isSending ? "Enviando..." : "Enviar"}
+                className="h-10 w-10 rounded-full border-0 bg-[linear-gradient(135deg,rgba(46,240,155,0.95),rgba(0,180,140,0.85))] p-0 text-lg font-semibold text-black shadow-[0_0_20px_rgba(46,240,155,0.20)] transition hover:brightness-110 disabled:shadow-none"
               >
-                {isSending ? "Enviando..." : "Enviar"}
+                {isSending ? "…" : "→"}
               </Button>
             </div>
-          </GlassSurface>
+          </div>
         </div>
       </form>
     </div>

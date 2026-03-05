@@ -46,6 +46,19 @@ export default function HomePage() {
   const previewPlants = plants.slice(0, 3)
   const totalPlants = plants.length
   const hasMoreThanPreview = plants.length > previewPlants.length
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+
+    if (hour < 12) {
+      return "Buenos dias, Alicia"
+    }
+
+    if (hour < 19) {
+      return "Buenas tardes, Alicia"
+    }
+
+    return "Buenas noches, Alicia"
+  }, [])
 
   const uniqueLocations = useMemo(
     () =>
@@ -153,7 +166,7 @@ export default function HomePage() {
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted">Hola 👋</p>
+                  <p className="text-sm text-muted">{greeting}</p>
                   <h1 className="text-primary text-3xl font-semibold tracking-tight">¿Qué haremos hoy?</h1>
                   <p className="text-secondary mt-1 text-sm">Tu resumen del jardín para hoy.</p>
                 </div>

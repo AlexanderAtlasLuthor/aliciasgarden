@@ -137,7 +137,7 @@ export default function ToniPage() {
     <div className="ag-container ag-screen">
       <div
         className="ag-panel space-y-4"
-        style={{ paddingBottom: "calc(12rem + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(9.5rem + env(safe-area-inset-bottom))" }}
       >
         <section className="space-y-1">
           <h1 className="text-primary text-2xl font-semibold tracking-tight">Toni</h1>
@@ -152,7 +152,7 @@ export default function ToniPage() {
           </Card>
         ) : null}
 
-        <section className="space-y-3">
+        <section className="max-h-[46dvh] space-y-3 overflow-y-auto pr-1">
           {messages.length === 0 ? (
             <GlassSurface className="p-4" variant="strong">
               <div className="space-y-1">
@@ -169,9 +169,9 @@ export default function ToniPage() {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.role === "assistant" ? (
-                  <GlassSurface className="max-w-[80%] p-[14px] shadow-glass" variant="strong">
+                  <div className="max-w-[80%] rounded-[30px] border border-white/20 bg-[#355f54] px-[14px] py-[12px]">
                     <p className="text-primary text-sm">{message.content}</p>
-                  </GlassSurface>
+                  </div>
                 ) : (
                   <div className="text-primary max-w-[80%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm">
                     {message.content}
@@ -183,8 +183,8 @@ export default function ToniPage() {
 
           {isSending ? (
             <div className="flex justify-start" aria-live="polite">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-secondary shadow-[0_10px_24px_rgba(0,0,0,0.25)]">
-                <span className="h-2 w-2 rounded-full bg-[rgba(46,240,155,0.65)] shadow-[0_0_12px_rgba(46,240,155,0.25)]" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-[#2e5548] px-3 py-1 text-xs text-secondary">
+                <span className="h-2 w-2 rounded-full bg-white/65" />
                 <span className="opacity-80">Toni está escribiendo...</span>
                 <span className="relative h-2 w-10 overflow-hidden rounded-full bg-white/10">
                   <span className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent)]" />
@@ -228,7 +228,7 @@ export default function ToniPage() {
         }}
       >
         <div className="ag-container">
-          <div className="relative overflow-hidden rounded-2xl border border-white/12 bg-white/8 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_0%,rgba(46,240,155,0.14),transparent_55%)] before:content-['']">
+          <div className="relative overflow-hidden rounded-2xl border border-white/16 bg-[#1b4034] p-2">
             <div className="relative flex items-center gap-2">
               <Input
                 type="text"
@@ -242,7 +242,7 @@ export default function ToniPage() {
                 type="submit"
                 disabled={isSending || !input.trim()}
                 aria-label={isSending ? "Enviando..." : "Enviar"}
-                className="h-10 w-10 rounded-full border-0 bg-[linear-gradient(135deg,rgba(46,240,155,0.95),rgba(0,180,140,0.85))] p-0 text-lg font-semibold text-black shadow-[0_0_20px_rgba(46,240,155,0.20)] transition hover:brightness-110 disabled:shadow-none"
+                className="h-10 w-10 rounded-full border-0 bg-[linear-gradient(135deg,rgba(46,240,155,0.95),rgba(0,180,140,0.85))] p-0 text-lg font-semibold text-black transition hover:brightness-110 disabled:shadow-none"
               >
                 {isSending ? "…" : "→"}
               </Button>

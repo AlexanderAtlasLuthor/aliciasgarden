@@ -2,6 +2,9 @@
 
 import { useEffect } from "react"
 
+import Button from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+
 type ToniErrorProps = {
   error: Error & { digest?: string }
   reset: () => void
@@ -13,18 +16,16 @@ export default function ToniError({ error, reset }: ToniErrorProps) {
   }, [error])
 
   return (
-    <section className="space-y-3 rounded-2xl border bg-white p-4 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900">Toni no está disponible</h2>
-      <p className="text-sm text-gray-600">
-        Ocurrió un error al abrir el chat. Intenta nuevamente.
-      </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="inline-flex items-center justify-center rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white"
-      >
-        Reintentar
-      </button>
-    </section>
+    <Card role="alert" className="border-red-300/45 bg-red-50/70">
+      <CardContent className="space-y-3">
+        <h2 className="text-lg font-semibold text-neutral-900">Toni no está disponible</h2>
+        <p className="text-sm text-neutral-700">
+          Ocurrió un error al abrir el chat. Intenta nuevamente.
+        </p>
+        <Button type="button" variant="danger" onClick={reset}>
+          Reintentar
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

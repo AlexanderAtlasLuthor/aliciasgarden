@@ -1,41 +1,87 @@
 @import "tailwindcss";
 
 :root {
-	--ag-primary: #3fa34d;
-	--ag-accent: #a6d94e;
-	--ag-deep: #1f7a3f;
-	--ag-ink: #0f2a18;
+	--brand-50: #f4fbe8;
+	--brand-100: #e8f6d0;
+	--brand-200: #d6eeaa;
+	--brand-300: #c2e67f;
+	--brand-400: #a9dc53;
+	--brand-500: #8ac74b;
+	--brand-600: #6bb543;
+	--brand-700: #57a63d;
+	--brand-800: #47923a;
+	--brand-900: #387b34;
 
-	--ag-bg: #f4f9f4;
+	--neutral-0: #ffffff;
+	--neutral-50: #f7faf8;
+	--neutral-100: #eff4f1;
+	--neutral-200: #e1e9e4;
+	--neutral-300: #cad6cf;
+	--neutral-400: #aebeb4;
+	--neutral-500: #8fa295;
+	--neutral-600: #6f8274;
+	--neutral-700: #566759;
+	--neutral-800: #3c4b40;
+	--neutral-900: #253328;
+	--neutral-1000: #162017;
 
-	--ag-glass: rgba(255, 255, 255, 0.62);
-	--ag-glass-border: rgba(255, 255, 255, 0.35);
+	--surface-glass-1: rgba(255, 255, 255, 0.42);
+	--surface-glass-2: rgba(255, 255, 255, 0.58);
+	--surface-glass-3: rgba(255, 255, 255, 0.72);
 
-	--ag-shadow-lg: 0 20px 60px rgba(31, 122, 63, 0.1);
-	--ag-shadow-md: 0 10px 30px rgba(31, 122, 63, 0.08);
+	--border-alpha-weak: rgba(255, 255, 255, 0.34);
+	--border-alpha-md: rgba(34, 51, 40, 0.16);
+	--border-alpha-strong: rgba(34, 51, 40, 0.24);
 
-	--ag-radius-lg: 24px;
-	--ag-radius-md: 18px;
+	--shadow-1: 0 2px 8px rgba(23, 35, 27, 0.08);
+	--shadow-2: 0 10px 24px rgba(23, 35, 27, 0.12);
+	--shadow-3: 0 20px 48px rgba(23, 35, 27, 0.14);
+	--shadow-4: 0 30px 70px rgba(23, 35, 27, 0.18);
+	--shadow-5: 0 42px 96px rgba(23, 35, 27, 0.22);
+	--shadow-glow-brand: 0 14px 32px rgba(107, 181, 67, 0.28);
 
-	--ag-blur: blur(14px);
+	--radius-1: 10px;
+	--radius-2: 12px;
+	--radius-3: 16px;
+	--radius-4: 20px;
+	--radius-5: 24px;
+	--radius-6: 30px;
 
-	/* Backward-compatible aliases for existing components not yet migrated. */
-	--ag-primary-600: var(--ag-deep);
-	--ag-secondary: #8fbf9e;
-	--ag-surface: #ffffff;
-	--ag-text: var(--ag-ink);
-	--ag-border: #d7e2d8;
+	--blur-sm: 8px;
+	--blur-md: 14px;
+	--blur-lg: 22px;
+
+	/* Backward-compatible aliases while components migrate to premium tokens. */
+	--ag-primary: var(--brand-700);
+	--ag-accent: var(--brand-400);
+	--ag-deep: var(--brand-900);
+	--ag-ink: var(--neutral-900);
+	--ag-bg: var(--neutral-100);
+	--ag-glass: var(--surface-glass-2);
+	--ag-glass-border: var(--border-alpha-weak);
+	--ag-shadow-lg: var(--shadow-3);
+	--ag-shadow-md: var(--shadow-2);
+	--ag-radius-lg: var(--radius-5);
+	--ag-radius-md: var(--radius-3);
+	--ag-blur: blur(var(--blur-md));
+	--ag-primary-600: var(--brand-800);
+	--ag-secondary: var(--brand-300);
+	--ag-surface: var(--neutral-0);
+	--ag-text: var(--neutral-900);
+	--ag-border: rgba(37, 51, 40, 0.14);
 	--ag-danger: #b42318;
 }
 
 body {
 	background:
-		radial-gradient(
-			1200px circle at 20% -10%,
-			rgba(166, 217, 78, 0.25),
-			transparent 60%
-		),
-		linear-gradient(180deg, #ecfbe7, #f7fbf6);
+		radial-gradient(900px circle at 12% -5%, rgba(169, 220, 83, 0.34), transparent 58%),
+		radial-gradient(780px circle at 92% 14%, rgba(71, 146, 58, 0.14), transparent 60%),
+		linear-gradient(180deg, #f6fbf5 0%, #eef5f1 100%);
 	min-height: 100vh;
-	color: var(--ag-ink);
+	color: var(--neutral-900);
+	font-family:
+		var(--font-geist-sans),
+		"Manrope",
+		"Segoe UI",
+		sans-serif;
 }

@@ -2,6 +2,9 @@
 
 import { useEffect } from "react"
 
+import Button from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+
 type TabsErrorProps = {
   error: Error & { digest?: string }
   reset: () => void
@@ -13,18 +16,16 @@ export default function TabsError({ error, reset }: TabsErrorProps) {
   }, [error])
 
   return (
-    <div className="space-y-4 rounded-2xl border bg-white p-4 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900">Ocurrió un problema</h2>
-      <p className="text-sm text-gray-600">
-        No pudimos cargar esta sección. Intenta nuevamente.
-      </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="inline-flex items-center justify-center rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white"
-      >
-        Reintentar
-      </button>
-    </div>
+    <Card role="alert" className="border-red-300/45 bg-red-50/70">
+      <CardContent className="space-y-4">
+        <h2 className="text-lg font-semibold text-neutral-900">Ocurrió un problema</h2>
+        <p className="text-sm text-neutral-700">
+          No pudimos cargar esta sección. Intenta nuevamente.
+        </p>
+        <Button type="button" variant="danger" onClick={reset}>
+          Reintentar
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

@@ -17,11 +17,8 @@ export default function TabBar() {
   }
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 border-t border-ag-border bg-ag-surface shadow-sm"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 px-2 py-2 text-sm">
+    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 gap-1.5 rounded-[var(--radius-6)] border border-border-weak bg-surface-glass-2 p-2 shadow-4 backdrop-blur-lg">
         {TABS.map((tab) => {
           const isActive = isTabActive(tab.href)
 
@@ -29,10 +26,10 @@ export default function TabBar() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center rounded-xl px-2 py-2 transition ${
+              className={`flex min-h-11 items-center justify-center rounded-[var(--radius-3)] px-2 py-2 text-[0.78rem] font-medium tracking-[0.01em] transition duration-200 ${
                 isActive
-                  ? "bg-ag-bg font-medium text-ag-primary"
-                  : "text-gray-600 hover:text-ag-text"
+                  ? "bg-[linear-gradient(135deg,var(--brand-300),var(--brand-600))] text-neutral-0 shadow-brand"
+                  : "text-neutral-700 hover:bg-neutral-0/40 hover:text-neutral-900"
               }`}
             >
               {tab.label}

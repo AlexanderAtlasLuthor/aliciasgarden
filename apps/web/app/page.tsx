@@ -1,5 +1,5 @@
-export default function Home() {
-  return (
-    <main className="p-6 text-2xl font-semibold">Alicia’s Garden</main>
-  );
+import { redirect } from "next/navigation";
+
+export default function Page() {
+  redirect("/home");
 }

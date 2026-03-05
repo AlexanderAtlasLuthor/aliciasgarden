@@ -1,0 +1,7 @@
+name = "alicias-garden-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+PROFILE_ID = "default_profile"
+CORS_ORIGIN = "http://localhost:3000"

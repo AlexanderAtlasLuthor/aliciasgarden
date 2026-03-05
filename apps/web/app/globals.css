@@ -254,6 +254,24 @@ body::before {
 	padding: 0 1rem;
 }
 
+@media (min-width: 640px) {
+	.ag-container {
+		max-width: 36rem;
+	}
+}
+
+@media (min-width: 768px) {
+	.ag-container {
+		max-width: 42rem;
+	}
+}
+
+@media (min-width: 1024px) {
+	.ag-container {
+		max-width: 48rem;
+	}
+}
+
 .ag-screen {
 	padding-top: 1rem;
 	padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));

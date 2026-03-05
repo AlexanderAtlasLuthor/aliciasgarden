@@ -17,7 +17,7 @@ export default function AppShell({ title, children }: AppShellProps) {
 
       <Header title={title} />
 
-      <main className="mx-auto mt-3 flex w-full max-w-md flex-col space-y-6">
+      <main className="mx-auto mt-3 flex w-full max-w-md flex-col space-y-6 sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
         {children}
       </main>
 

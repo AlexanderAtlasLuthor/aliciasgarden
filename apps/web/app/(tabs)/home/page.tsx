@@ -204,7 +204,7 @@ export default function HomePage() {
 
         <div className="ag-divider ag-section" />
 
-        <section className="ag-section grid grid-cols-2 gap-3">
+        <section className="ag-section grid grid-cols-2 gap-3 md:grid-cols-4">
           {dashboardTiles.map((tile) => {
             const isLongValueTile = tile.label === "Última añadida"
 
@@ -238,51 +238,49 @@ export default function HomePage() {
 
         <div className="ag-divider ag-section" />
 
-        <section className="ag-section">
-          <MiniTimeline
-            title="Semana de cuidados"
-            subtitle="Vista rápida"
-            items={weeklyTimeline}
-            ctaLabel="Ver plan"
-            ctaHref="/plan"
-          />
-        </section>
+        <div className="ag-section grid gap-4 md:grid-cols-2 md:items-start">
+          <div className="space-y-4">
+            <section>
+              <MiniTimeline
+                title="Semana de cuidados"
+                subtitle="Vista rápida"
+                items={weeklyTimeline}
+                ctaLabel="Ver plan"
+                ctaHref="/plan"
+              />
+            </section>
 
-        <div className="ag-divider ag-section" />
+            <section>
+              <GlassSurface className="space-y-4 p-4" variant="medium">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-primary text-lg font-medium">Acciones rápidas</h2>
+                  <p className="text-muted text-xs">Atajos</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    asChild
+                    variant="primary"
+                    size="md"
+                    className="h-12 w-full px-4 py-3 shadow-[0_18px_40px_rgba(88,255,138,0.25)]"
+                  >
+                    <Link href="/toni">Hablar con Toni</Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="md" className="h-12 w-full px-4 py-3">
+                    <Link href="/garden/new">Añadir planta</Link>
+                  </Button>
+                </div>
+              </GlassSurface>
+            </section>
 
-        <section className="ag-section">
-          <GlassSurface className="space-y-4 p-4" variant="medium">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-primary text-lg font-medium">Acciones rápidas</h2>
-              <p className="text-muted text-xs">Atajos</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                asChild
-                variant="primary"
-                size="md"
-                className="h-12 w-full px-4 py-3 shadow-[0_18px_40px_rgba(88,255,138,0.25)]"
-              >
-                <Link href="/toni">Hablar con Toni</Link>
-              </Button>
-              <Button asChild variant="ghost" size="md" className="h-12 w-full px-4 py-3">
-                <Link href="/garden/new">Añadir planta</Link>
-              </Button>
-            </div>
-          </GlassSurface>
-        </section>
-
-        <div className="ag-divider ag-section" />
-
-        <section className="ag-section space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-primary text-lg font-medium">Mi Jardín</h2>
-            {hasMoreThanPreview ? (
-              <Link href="/garden" className="text-secondary text-sm transition-colors hover:text-primary">
-                Ver mi jardín
-              </Link>
-            ) : null}
-          </div>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-primary text-lg font-medium">Mi Jardín</h2>
+                {hasMoreThanPreview ? (
+                  <Link href="/garden" className="text-secondary text-sm transition-colors hover:text-primary">
+                    Ver mi jardín
+                  </Link>
+                ) : null}
+              </div>
 
           {isLoading ? (
             <div className="space-y-3" aria-busy="true" aria-live="polite">
@@ -360,85 +358,87 @@ export default function HomePage() {
               ))}
             </div>
           ) : null}
-        </section>
+            </section>
+          </div>
 
-        <div className="ag-divider ag-section" />
+          <div className="space-y-4">
+            <section>
+              <GlassSurface className="space-y-4 p-4" variant="strong">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-white">Actividad</p>
+                    <p className="text-xs text-white/60">Últimos 7 días</p>
+                  </div>
+                  <p className="text-sm font-semibold text-white/85">+12%</p>
+                </div>
+                {isLoading ? (
+                  <div className="h-20 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+                ) : (
+                  <div className="flex h-24 items-end gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    {activityValues.map((value, index) => (
+                      <div
+                        key={`bar-${index}`}
+                        className={[
+                          "w-full rounded-t-sm border border-white/10 transition-all",
+                          index === activityValues.length - 1 ? "bg-white/22" : "bg-white/14",
+                        ].join(" ")}
+                        style={{ height: `${value}%` }}
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
+                )}
+              </GlassSurface>
+            </section>
 
-        <section className="ag-section">
-          <GlassSurface className="space-y-4 p-4" variant="strong">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base font-semibold text-white">Actividad</p>
-                <p className="text-xs text-white/60">Últimos 7 días</p>
-              </div>
-              <p className="text-sm font-semibold text-white/85">+12%</p>
-            </div>
-            {isLoading ? (
-              <div className="h-20 animate-pulse rounded-xl border border-white/10 bg-white/5" />
-            ) : (
-              <div className="flex h-24 items-end gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                {activityValues.map((value, index) => (
-                  <div
-                    key={`bar-${index}`}
-                    className={[
-                      "w-full rounded-t-sm border border-white/10 transition-all",
-                      index === activityValues.length - 1 ? "bg-white/22" : "bg-white/14",
-                    ].join(" ")}
-                    style={{ height: `${value}%` }}
-                    aria-hidden="true"
-                  />
-                ))}
-              </div>
-            )}
-          </GlassSurface>
-        </section>
+            <section className="space-y-4">
+              <h2 className="text-primary text-lg font-medium">Actividad reciente</h2>
 
-        <section className="ag-section space-y-4">
-          <h2 className="text-primary text-lg font-medium">Actividad reciente</h2>
+              {isLoading ? (
+                <GlassSurface className="h-28 animate-pulse border-white/15 bg-white/6" variant="strong" />
+              ) : (
+                <GlassSurface className="relative space-y-3 p-4" variant="strong">
+                  <div className="pointer-events-none absolute bottom-6 left-5 top-6 w-px bg-white/10" />
+                  {timelineEvents.map((event, index) => (
+                    <div key={`${event.title}-${index}`} className="relative pl-7">
+                      <span
+                        className={[
+                          "absolute left-[13px] top-2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-white/20",
+                          index === 0 ? "bg-emerald-300/70 shadow-[0_0_10px_rgba(120,255,190,0.5)]" : "bg-white/40",
+                        ].join(" ")}
+                        aria-hidden="true"
+                      />
+                      <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2">
+                        <p className="text-sm font-medium text-white/90">{event.title}</p>
+                        <p className="text-xs text-white/60">{event.when}</p>
+                      </div>
+                    </div>
+                  ))}
+                </GlassSurface>
+              )}
+            </section>
 
-          {isLoading ? (
-            <GlassSurface className="h-28 animate-pulse border-white/15 bg-white/6" variant="strong" />
-          ) : (
-            <GlassSurface className="relative space-y-3 p-4" variant="strong">
-              <div className="pointer-events-none absolute bottom-6 left-5 top-6 w-px bg-white/10" />
-              {timelineEvents.map((event, index) => (
-                <div key={`${event.title}-${index}`} className="relative pl-7">
-                  <span
-                    className={[
-                      "absolute left-[13px] top-2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-white/20",
-                      index === 0 ? "bg-emerald-300/70 shadow-[0_0_10px_rgba(120,255,190,0.5)]" : "bg-white/40",
-                    ].join(" ")}
-                    aria-hidden="true"
-                  />
-                  <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2">
-                    <p className="text-sm font-medium text-white/90">{event.title}</p>
-                    <p className="text-xs text-white/60">{event.when}</p>
+            <section>
+              <GlassSurface className="rounded-full border-white/15 px-4 py-2.5" variant="strong">
+                <p className="text-sm text-white/80">💡 Insight: Las plantas con luz indirecta crecen más estable.</p>
+              </GlassSurface>
+            </section>
+
+            <section>
+              <GlassSurface className="rounded-2xl border-white/15 p-4" variant="strong">
+                <div className="flex items-start gap-3">
+                  <span className="text-lg leading-none">💡</span>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-white">Tip de Toni</p>
+                    <p className="text-sm text-white/70">
+                      Tip: Si las hojas amarillean, revisa riego y drenaje.
+                    </p>
                   </div>
                 </div>
-              ))}
-            </GlassSurface>
-          )}
-        </section>
-
-        <section className="ag-section">
-          <GlassSurface className="rounded-full border-white/15 px-4 py-2.5" variant="strong">
-            <p className="text-sm text-white/80">💡 Insight: Las plantas con luz indirecta crecen más estable.</p>
-          </GlassSurface>
-        </section>
-
-        <section className="ag-section">
-          <GlassSurface className="rounded-2xl border-white/15 p-4" variant="strong">
-            <div className="flex items-start gap-3">
-              <span className="text-lg leading-none">💡</span>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-white">Tip de Toni</p>
-                <p className="text-sm text-white/70">
-                  Tip: Si las hojas amarillean, revisa riego y drenaje.
-                </p>
-              </div>
-            </div>
-          </GlassSurface>
-        </section>
+              </GlassSurface>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -169,11 +169,11 @@ export default function ToniPage() {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.role === "assistant" ? (
-                  <div className="max-w-[80%] rounded-[30px] border border-white/20 bg-[#355f54] px-[14px] py-[12px]">
+                  <div className="max-w-[85%] rounded-[30px] border border-white/20 bg-[#355f54] px-[14px] py-[12px] md:max-w-[65%]">
                     <p className="text-primary text-sm">{message.content}</p>
                   </div>
                 ) : (
-                  <div className="text-primary max-w-[80%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm">
+                  <div className="text-primary max-w-[85%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm md:max-w-[65%]">
                     {message.content}
                   </div>
                 )}

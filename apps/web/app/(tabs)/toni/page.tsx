@@ -139,14 +139,14 @@ export default function ToniPage() {
       style={{ paddingBottom: "calc(10rem + env(safe-area-inset-bottom))" }}
     >
       <section className="space-y-1">
-        <h1 className="text-2xl font-semibold">Toni</h1>
-        <p className="text-sm text-gray-600">Tu asistente para cuidar mejor tus plantas.</p>
+        <h1 className="text-2xl font-semibold text-white">Toni</h1>
+        <p className="text-sm text-white/65">Tu asistente para cuidar mejor tus plantas.</p>
       </section>
 
       {loadError ? (
-        <Card className="border-ag-danger bg-red-50" role="alert">
+        <Card className="border-red-400/35 bg-red-500/10" role="alert">
           <CardContent>
-            <p className="text-sm text-red-700">{loadError}</p>
+            <p className="text-sm text-white/80">{loadError}</p>
           </CardContent>
         </Card>
       ) : null}
@@ -168,11 +168,11 @@ export default function ToniPage() {
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {message.role === "assistant" ? (
-                <GlassSurface className="max-w-[80%] p-[14px]" variant="strong">
+                <GlassSurface className="max-w-[80%] p-[14px] shadow-glass" variant="strong">
                   <p className="text-sm text-white">{message.content}</p>
                 </GlassSurface>
               ) : (
-                <div className="max-w-[80%] rounded-full border border-green-300/20 bg-green-500/20 px-[14px] py-[10px] text-sm text-white">
+                <div className="max-w-[80%] rounded-full border border-white/[0.12] bg-white/10 px-[14px] py-[10px] text-sm text-white">
                   {message.content}
                 </div>
               )}
@@ -182,7 +182,7 @@ export default function ToniPage() {
 
         {isSending ? (
           <div className="flex justify-start" aria-live="polite">
-            <GlassSurface className="max-w-[80%] p-[14px]" variant="strong">
+            <GlassSurface className="max-w-[80%] animate-pulse p-[14px]" variant="strong">
               <p className="text-sm text-white/70">Toni está escribiendo...</p>
             </GlassSurface>
           </div>
@@ -214,26 +214,30 @@ export default function ToniPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="fixed left-0 right-0 border-t bg-white px-4 py-3"
+        className="fixed left-0 right-0 px-4 py-3"
         style={{
           bottom: "calc(3.75rem + env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)"
         }}
       >
-        <div className="mx-auto flex max-w-md gap-2">
-          <Input
-            type="text"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="Escribe tu mensaje..."
-            disabled={isSending}
-          />
-          <Button
-            type="submit"
-            disabled={isSending || !input.trim()}
-          >
-            {isSending ? "Enviando..." : "Enviar"}
-          </Button>
+        <div className="mx-auto max-w-md">
+          <GlassSurface className="p-2" variant="strong">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Escribe tu mensaje..."
+                disabled={isSending}
+              />
+              <Button
+                type="submit"
+                disabled={isSending || !input.trim()}
+              >
+                {isSending ? "Enviando..." : "Enviar"}
+              </Button>
+            </div>
+          </GlassSurface>
         </div>
       </form>
     </div>

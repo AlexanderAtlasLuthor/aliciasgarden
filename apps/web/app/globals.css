@@ -99,18 +99,20 @@
 
 body {
 	background:
-		radial-gradient(1000px circle at 10% -10%, rgba(88, 255, 138, 0.22), transparent 55%),
-		radial-gradient(860px circle at 100% 8%, rgba(31, 211, 107, 0.17), transparent 58%),
-		radial-gradient(620px circle at 50% 120%, rgba(255, 198, 120, 0.09), transparent 62%),
+		radial-gradient(980px circle at 10% -12%, rgba(92, 255, 174, 0.2), transparent 54%),
+		radial-gradient(920px circle at 102% 10%, rgba(36, 196, 122, 0.2), transparent 58%),
+		radial-gradient(720px circle at 46% 112%, rgba(9, 78, 48, 0.42), transparent 62%),
+		repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px),
 		linear-gradient(180deg, var(--ag-bg0) 0%, var(--ag-bg1) 100%);
 	min-height: 100dvh;
-	color: var(--ag-ink);
+	color: rgba(255, 255, 255, 0.86);
 	font-family:
 		var(--font-geist-sans),
 		"Manrope",
 		"Segoe UI",
 		sans-serif;
 	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -118,9 +120,20 @@ body {
 	color: #ffffff;
 }
 
-:where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])):focus-visible {
-	outline: none;
-	box-shadow: 0 0 0 3px var(--ag-brand-ring-25);
+@layer base {
+	.ag-focus-ring:focus-visible {
+		outline: none;
+		box-shadow:
+			0 0 0 3px rgba(120, 255, 180, 0.22),
+			0 0 0 1px rgba(255, 255, 255, 0.12);
+	}
+
+	:where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])):focus-visible {
+		outline: none;
+		box-shadow:
+			0 0 0 3px rgba(120, 255, 180, 0.22),
+			0 0 0 1px rgba(255, 255, 255, 0.12);
+	}
 }
 
 .ag-glass {

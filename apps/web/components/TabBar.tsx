@@ -18,8 +18,8 @@ export default function TabBar() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto max-w-md px-3">
+    <div className="pointer-events-none fixed bottom-3 left-0 right-0 z-30 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-md px-4">
         <GlassSurface className="pointer-events-auto rounded-[24px] px-4 py-2" variant="strong">
           <div className="flex items-center justify-between gap-1">
             {TABS.map((tab) => {
@@ -29,10 +29,10 @@ export default function TabBar() {
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`flex min-h-9 items-center justify-center px-3 py-1 text-[0.78rem] font-medium tracking-[0.01em] transition duration-200 ${
+                  className={`flex min-h-9 items-center justify-center px-3 py-1 text-[0.78rem] font-medium tracking-[0.01em] transition-all duration-200 ${
                     isActive
-                      ? "rounded-full bg-white/10 text-white"
-                      : "text-white/60 hover:text-white"
+                      ? "rounded-full bg-white/10 text-white shadow-glow"
+                      : "text-white/55 hover:text-white/80"
                   }`}
                 >
                   {tab.label}

@@ -13,7 +13,9 @@ function toClassList(value: CnValue): string[] {
   }
 
   if (typeof value === "string" || typeof value === "number") {
-    return [String(value)]
+    return String(value)
+      .split(/\s+/)
+      .filter(Boolean)
   }
 
   if (Array.isArray(value)) {
@@ -22,9 +24,10 @@ function toClassList(value: CnValue): string[] {
 
   return Object.entries(value)
     .filter(([, isEnabled]) => Boolean(isEnabled))
-    .map(([className]) => className)
+    .flatMap(([className]) => className.split(/\s+/).filter(Boolean))
 }
 
 export function cn(...values: CnValue[]): string {
-  return values.flatMap((value) => toClassList(value)).join(" ")
+  const classes = values.flatMap((value) => toClassList(value)).filter(Boolean)
+  return classes.join(" ")
 }

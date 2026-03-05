@@ -1,15 +1,18 @@
 import { cn } from "@/components/ui/cn"
 import GlassSurface from "@/components/ui/GlassSurface"
 
-export type CardProps = React.HTMLAttributes<HTMLDivElement>
+export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+  interactive?: boolean
+}
 
-export function Card({ className, ...props }: CardProps) {
+export function Card({ className, interactive = false, ...props }: CardProps) {
   return (
     <GlassSurface
       className={cn(
-        "rounded-2xl border-white/10 bg-white/5 text-ag-ink shadow-lg backdrop-blur-[20px]",
+        "rounded-2xl border-white/10 bg-white/6 text-ag-ink shadow-glass backdrop-blur-[20px]",
         className
       )}
+      interactive={interactive}
       {...props}
     />
   )

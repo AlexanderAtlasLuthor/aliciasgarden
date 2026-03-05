@@ -51,7 +51,10 @@ const config: Config = {
         ag: {
           bg0: "var(--ag-bg0)",
           bg1: "var(--ag-bg1)",
+          neon: "#7cffb4",
+          ink: "#03160d",
           muted: "var(--ag-ink-muted)",
+          hairline: "rgba(255,255,255,0.10)",
           faint: "var(--ag-ink-faint)",
           brand: "var(--ag-brand)",
           brand2: "var(--ag-brand-2)",
@@ -65,7 +68,6 @@ const config: Config = {
           primary: "var(--ag-primary)",
           accent: "var(--ag-accent)",
           deep: "var(--ag-deep)",
-          ink: "var(--ag-ink)",
           glass: "var(--ag-glass)",
           border: "var(--ag-glass-border)",
           secondary: "var(--ag-secondary)",
@@ -83,6 +85,8 @@ const config: Config = {
         5: "var(--radius-5)",
         6: "var(--radius-6)",
         ag: "var(--ag-radius)",
+        "ag-xl": "28px",
+        "ag-2xl": "32px",
       },
       boxShadow: {
         1: "var(--shadow-1)",
@@ -94,6 +98,10 @@ const config: Config = {
         ag1: "var(--ag-shadow-1)",
         ag2: "var(--ag-shadow-2)",
         agGlow: "var(--ag-shadow-glow)",
+        glass: "0 12px 36px rgba(0, 0, 0, 0.34)",
+        glassStrong: "0 24px 64px rgba(0, 0, 0, 0.46)",
+        glow: "0 10px 30px rgba(120, 255, 180, 0.22)",
+        glowStrong: "0 16px 42px rgba(120, 255, 180, 0.3)",
       },
       backdropBlur: {
         sm: "var(--blur-sm)",

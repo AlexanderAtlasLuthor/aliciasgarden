@@ -59,13 +59,13 @@ export default function HomePage() {
     Object.entries(locationCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "Sin datos"
 
   return (
-    <div>
+    <div className="space-y-8">
       <section className="space-y-1">
         <p className="text-sm text-white/60">Hola 👋</p>
         <h1 className="text-3xl font-semibold text-white">¿Qué haremos hoy?</h1>
       </section>
 
-      <section className="mt-4 flex gap-3">
+      <section className="flex gap-3">
         <Button
           asChild
           variant="primary"
@@ -84,14 +84,14 @@ export default function HomePage() {
         </Button>
       </section>
 
-      <section className="mt-6 grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 [&>*]:h-full">
         <MetricTile icon="🌱" label="Plantas" value={totalPlants} />
         <MetricTile icon="💧" label="Riegos hoy" value={2} />
         <MetricTile icon="📍" label="Ubicación favorita" value={favoriteLocation} />
         <MetricTile icon="🔥" label="Streak" value="5 días" />
       </section>
 
-      <section className="mt-8 space-y-4">
+      <section className="space-y-4">
         <h2 className="text-lg font-semibold text-white">Mi Jardín</h2>
 
         {isLoading ? (
@@ -136,7 +136,7 @@ export default function HomePage() {
         {!isLoading && !error && plants.length > 0 ? (
           <div className="space-y-4">
             {previewPlants.map((plant) => (
-              <Card key={plant.id}>
+              <Card key={plant.id} interactive>
                 <CardContent className="space-y-1">
                   <p className="font-semibold text-white">{plant.nickname}</p>
                   {plant.species_common ? (
@@ -149,7 +149,10 @@ export default function HomePage() {
               </Card>
             ))}
 
-            <Link href="/garden" className="text-sm font-medium text-green-300">
+            <Link
+              href="/garden"
+              className="text-sm font-medium text-green-300 underline decoration-green-300/35 underline-offset-4 transition-all duration-200 hover:text-green-200 hover:drop-shadow-[0_0_12px_rgba(120,255,180,0.45)]"
+            >
               Ver mi jardín
             </Link>
           </div>

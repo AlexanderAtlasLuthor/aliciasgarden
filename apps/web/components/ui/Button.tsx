@@ -7,13 +7,13 @@ type ButtonSize = "sm" | "md"
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "border border-ag-borderA bg-gradient-to-br from-ag-brand2 to-ag-brandDeep text-ag-ink shadow-agGlow hover:brightness-110 active:brightness-95",
+    "border border-white/10 bg-[linear-gradient(135deg,rgba(90,255,170,0.35),rgba(20,160,90,0.35))] text-white shadow-glow hover:-translate-y-[1px] hover:shadow-glowStrong active:translate-y-0 active:shadow-glow",
   secondary:
-    "border border-ag-borderB bg-ag-glass1 text-white/85 shadow-ag1 backdrop-blur-ag hover:bg-ag-glass2 active:bg-ag-glass3",
+    "border border-white/10 bg-white/6 text-white/85 shadow-glass backdrop-blur-ag hover:bg-white/10 active:bg-white/10",
   ghost:
-    "border border-ag-borderB bg-ag-glass1 text-white/85 backdrop-blur-ag hover:bg-ag-glass2 active:bg-ag-glass3",
+    "border border-white/10 bg-white/6 text-white/85 backdrop-blur-ag hover:bg-white/10 active:bg-white/10",
   danger:
-    "border border-red-300/40 bg-[linear-gradient(135deg,#de4b41,#b42318)] text-ag-ink shadow-ag1 hover:brightness-105 active:brightness-95",
+    "border border-red-300/40 bg-[linear-gradient(135deg,#de4b41,#b42318)] text-white shadow-glass hover:brightness-105 active:brightness-95",
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -41,8 +41,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   ref
 ) {
   const buttonClasses = cn(
-    "inline-flex items-center justify-center rounded-[var(--radius-3)] font-semibold tracking-[0.01em] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ag-brand-ring-40)] focus-visible:ring-offset-0 active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50",
-    disabled && "pointer-events-none opacity-50",
+    "inline-flex items-center justify-center rounded-[var(--radius-3)] font-semibold tracking-[0.01em] transition-all duration-200 ag-focus-ring active:translate-y-[1px] disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-45",
+    disabled && "pointer-events-none opacity-45",
     variantClasses[variant],
     sizeClasses[size],
     className

@@ -1,9 +1,23 @@
 import { Hono } from 'hono';
 
-const app = new Hono();
+import { cors } from './middleware/cors';
+import { errors } from './middleware/errors';
+import { rateLimit } from './middleware/rateLimit';
+import { healthRoutes } from './routes/health';
+import { plantsRoutes } from './routes/plants';
+import type { Env } from './types/env';
+
+const app = new Hono<{ Bindings: Env }>();
+
+app.use('*', errors());
+app.use('*', cors());
+app.use('*', rateLimit());
 
 app.get('/', (c) => {
   return c.json({ ok: true, note: 'bootstrap' });
 });
+
+app.route('/', healthRoutes);
+app.route('/', plantsRoutes);
 
 export default app;

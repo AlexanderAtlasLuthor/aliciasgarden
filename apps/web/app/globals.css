@@ -1,17 +1,41 @@
 @import "tailwindcss";
 
 :root {
-	--ag-primary: #2f7a45;
-	--ag-primary-600: #2f7a45;
+	--ag-primary: #3fa34d;
+	--ag-accent: #a6d94e;
+	--ag-deep: #1f7a3f;
+	--ag-ink: #0f2a18;
+
+	--ag-bg: #f4f9f4;
+
+	--ag-glass: rgba(255, 255, 255, 0.62);
+	--ag-glass-border: rgba(255, 255, 255, 0.35);
+
+	--ag-shadow-lg: 0 20px 60px rgba(31, 122, 63, 0.1);
+	--ag-shadow-md: 0 10px 30px rgba(31, 122, 63, 0.08);
+
+	--ag-radius-lg: 24px;
+	--ag-radius-md: 18px;
+
+	--ag-blur: blur(14px);
+
+	/* Backward-compatible aliases for existing components not yet migrated. */
+	--ag-primary-600: var(--ag-deep);
 	--ag-secondary: #8fbf9e;
-	--ag-bg: #f5f8f3;
 	--ag-surface: #ffffff;
-	--ag-text: #1e2a22;
+	--ag-text: var(--ag-ink);
 	--ag-border: #d7e2d8;
 	--ag-danger: #b42318;
 }
 
 body {
-	background: var(--ag-bg);
-	color: var(--ag-text);
+	background:
+		radial-gradient(
+			1200px circle at 20% -10%,
+			rgba(166, 217, 78, 0.25),
+			transparent 60%
+		),
+		linear-gradient(180deg, #ecfbe7, #f7fbf6);
+	min-height: 100vh;
+	color: var(--ag-ink);
 }

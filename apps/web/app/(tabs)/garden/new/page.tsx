@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation"
 import { FormEvent, useState } from "react"
 
+import Button from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+import Input from "@/components/ui/Input"
 import { createPlant } from "@/lib/api"
 
 function normalizeOptionalString(value: string): string | undefined {
@@ -132,153 +135,142 @@ export default function NewPlantPage() {
         </p>
       </section>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white border rounded-2xl shadow-sm p-4 space-y-4"
-        aria-live="polite"
-      >
-        {submitError ? (
-          <div
-            role="alert"
-            className="space-y-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-          >
-            <p>{submitError}</p>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : null}
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4" aria-live="polite">
+            {submitError ? (
+              <Card
+                role="alert"
+                className="space-y-2 border-ag-danger bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                <CardContent className="space-y-2 p-0">
+                  <p>{submitError}</p>
+                  <Button type="submit" disabled={isSubmitting} variant="danger" size="sm">
+                    Reintentar
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
 
-        <div className="space-y-1">
-          <label htmlFor="nickname" className="text-sm font-medium text-gray-900">
-            Nombre (nickname)
-          </label>
-          <input
-            id="nickname"
-            type="text"
-            value={nickname}
-            onChange={(event) => {
-              setNickname(event.target.value)
-              if (fieldErrors.nickname) {
-                setFieldErrors((current) => ({ ...current, nickname: undefined }))
-              }
-            }}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-            aria-invalid={Boolean(fieldErrors.nickname)}
-            aria-describedby={fieldErrors.nickname ? "nickname-error" : undefined}
-            required
-          />
-          {fieldErrors.nickname ? (
-            <p id="nickname-error" role="alert" className="text-sm text-red-600">
-              {fieldErrors.nickname}
-            </p>
-          ) : null}
-        </div>
+            <div className="space-y-1">
+              <label htmlFor="nickname" className="text-sm font-medium text-gray-900">
+                Nombre (nickname)
+              </label>
+              <Input
+                id="nickname"
+                type="text"
+                value={nickname}
+                onChange={(event) => {
+                  setNickname(event.target.value)
+                  if (fieldErrors.nickname) {
+                    setFieldErrors((current) => ({ ...current, nickname: undefined }))
+                  }
+                }}
+                aria-invalid={Boolean(fieldErrors.nickname)}
+                aria-describedby={fieldErrors.nickname ? "nickname-error" : undefined}
+                required
+              />
+              {fieldErrors.nickname ? (
+                <p id="nickname-error" role="alert" className="text-sm text-red-600">
+                  {fieldErrors.nickname}
+                </p>
+              ) : null}
+            </div>
 
-        <div className="space-y-1">
-          <label htmlFor="species_common" className="text-sm font-medium text-gray-900">
-            Especie común
-          </label>
-          <input
-            id="species_common"
-            type="text"
-            value={speciesCommon}
-            onChange={(event) => setSpeciesCommon(event.target.value)}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label htmlFor="species_common" className="text-sm font-medium text-gray-900">
+                Especie común
+              </label>
+              <Input
+                id="species_common"
+                type="text"
+                value={speciesCommon}
+                onChange={(event) => setSpeciesCommon(event.target.value)}
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label htmlFor="location" className="text-sm font-medium text-gray-900">
-            Ubicación
-          </label>
-          <input
-            id="location"
-            type="text"
-            value={location}
-            onChange={(event) => setLocation(event.target.value)}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label htmlFor="location" className="text-sm font-medium text-gray-900">
+                Ubicación
+              </label>
+              <Input
+                id="location"
+                type="text"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label htmlFor="light" className="text-sm font-medium text-gray-900">
-            Luz
-          </label>
-          <input
-            id="light"
-            type="text"
-            value={light}
-            onChange={(event) => setLight(event.target.value)}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <label htmlFor="light" className="text-sm font-medium text-gray-900">
+                Luz
+              </label>
+              <Input
+                id="light"
+                type="text"
+                value={light}
+                onChange={(event) => setLight(event.target.value)}
+              />
+            </div>
 
-        <div className="space-y-1">
-          <label
-            htmlFor="watering_interval_days"
-            className="text-sm font-medium text-gray-900"
-          >
-            Intervalo de riego (días)
-          </label>
-          <input
-            id="watering_interval_days"
-            type="number"
-            value={wateringIntervalDays}
-            onChange={(event) => {
-              setWateringIntervalDays(event.target.value)
-              if (fieldErrors.wateringIntervalDays) {
-                setFieldErrors((current) => ({
-                  ...current,
-                  wateringIntervalDays: undefined
-                }))
-              }
-            }}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-            min={1}
-            max={365}
-            step={1}
-            aria-invalid={Boolean(fieldErrors.wateringIntervalDays)}
-            aria-describedby={
-              fieldErrors.wateringIntervalDays ? "watering-interval-days-error" : undefined
-            }
-          />
-          {fieldErrors.wateringIntervalDays ? (
-            <p
-              id="watering-interval-days-error"
-              role="alert"
-              className="text-sm text-red-600"
-            >
-              {fieldErrors.wateringIntervalDays}
-            </p>
-          ) : null}
-        </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="watering_interval_days"
+                className="text-sm font-medium text-gray-900"
+              >
+                Intervalo de riego (días)
+              </label>
+              <Input
+                id="watering_interval_days"
+                type="number"
+                value={wateringIntervalDays}
+                onChange={(event) => {
+                  setWateringIntervalDays(event.target.value)
+                  if (fieldErrors.wateringIntervalDays) {
+                    setFieldErrors((current) => ({
+                      ...current,
+                      wateringIntervalDays: undefined
+                    }))
+                  }
+                }}
+                min={1}
+                max={365}
+                step={1}
+                aria-invalid={Boolean(fieldErrors.wateringIntervalDays)}
+                aria-describedby={
+                  fieldErrors.wateringIntervalDays ? "watering-interval-days-error" : undefined
+                }
+              />
+              {fieldErrors.wateringIntervalDays ? (
+                <p
+                  id="watering-interval-days-error"
+                  role="alert"
+                  className="text-sm text-red-600"
+                >
+                  {fieldErrors.wateringIntervalDays}
+                </p>
+              ) : null}
+            </div>
 
-        <div className="space-y-1">
-          <label htmlFor="notes" className="text-sm font-medium text-gray-900">
-            Notas
-          </label>
-          <textarea
-            id="notes"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            className="w-full rounded-xl border px-3 py-2 text-sm"
-            rows={4}
-          />
-        </div>
+            <div className="space-y-1">
+              <label htmlFor="notes" className="text-sm font-medium text-gray-900">
+                Notas
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                className="w-full rounded-xl border border-ag-border bg-ag-surface px-3 py-2 text-sm text-ag-text outline-none transition focus-visible:ring-2 focus-visible:ring-ag-primary focus-visible:ring-offset-1"
+                rows={4}
+              />
+            </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {isSubmitting ? "Guardando..." : "Guardar planta"}
-        </button>
-      </form>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? "Guardando..." : "Guardar planta"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

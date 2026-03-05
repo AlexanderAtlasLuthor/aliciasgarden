@@ -2,6 +2,9 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react"
 
+import Button from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+import Input from "@/components/ui/Input"
 import { getThreadMessages, getThreads, sendChatMessage } from "@/lib/api"
 
 type UiMessage = {
@@ -140,61 +143,68 @@ export default function ToniPage() {
       </section>
 
       {loadError ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {loadError}
-        </p>
+        <Card className="border-ag-danger bg-red-50" role="alert">
+          <CardContent>
+            <p className="text-sm text-red-700">{loadError}</p>
+          </CardContent>
+        </Card>
       ) : null}
 
       <section className="space-y-3">
         {messages.length === 0 ? (
-          <div className="bg-white border rounded-2xl shadow-sm p-4 space-y-1">
-            <p className="font-medium">Pregúntale algo a Toni</p>
-            <p className="text-sm text-gray-600">
-              Pide ayuda con riego, luz o cuidados de tus plantas.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="space-y-1">
+              <p className="font-medium">Pregúntale algo a Toni</p>
+              <p className="text-sm text-gray-600">
+                Pide ayuda con riego, luz o cuidados de tus plantas.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           messages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm border ${
-                  message.role === "user"
-                    ? "bg-green-600 text-white border-green-600"
-                    : "bg-white text-gray-900 border-gray-200"
-                }`}
-              >
-                {message.content}
-              </div>
+              {message.role === "assistant" ? (
+                <Card className="max-w-[85%]">
+                  <CardContent className="text-sm">{message.content}</CardContent>
+                </Card>
+              ) : (
+                <div className="max-w-[85%] rounded-full border border-ag-border bg-ag-bg px-4 py-2 text-sm text-ag-text shadow-sm">
+                  {message.content}
+                </div>
+              )}
             </div>
           ))
         )}
 
         {isSending ? (
           <div className="flex justify-start" aria-live="polite">
-            <div className="max-w-[85%] rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 shadow-sm">
-              Toni está escribiendo...
-            </div>
+            <Card className="max-w-[85%]">
+              <CardContent className="text-sm text-gray-600">Toni está escribiendo...</CardContent>
+            </Card>
           </div>
         ) : null}
 
         {sendError ? (
           <div className="flex justify-start" role="alert" aria-live="polite">
-            <div className="max-w-[85%] space-y-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm">
-              <p>{sendError}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleRetry()
-                }}
-                disabled={isSending || !lastUserMessage}
-                className="inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60"
-              >
-                Reintentar
-              </button>
-            </div>
+            <Card className="max-w-[85%] border-ag-danger bg-red-50 text-sm text-red-700">
+              <CardContent className="space-y-2">
+                <p>{sendError}</p>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    void handleRetry()
+                  }}
+                  disabled={isSending || !lastUserMessage}
+                  variant="danger"
+                  size="sm"
+                >
+                  Reintentar
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         ) : null}
 
@@ -210,21 +220,19 @@ export default function ToniPage() {
         }}
       >
         <div className="mx-auto flex max-w-md gap-2">
-          <input
+          <Input
             type="text"
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Escribe tu mensaje..."
-            className="w-full rounded-xl border px-3 py-2 text-sm"
             disabled={isSending}
           />
-          <button
+          <Button
             type="submit"
             disabled={isSending || !input.trim()}
-            className="inline-flex items-center justify-center rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
             {isSending ? "Enviando..." : "Enviar"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

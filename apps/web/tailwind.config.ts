@@ -11,11 +11,15 @@ const config: Config = {
       colors: {
         ag: {
           primary: "var(--ag-primary)",
+          accent: "var(--ag-accent)",
+          deep: "var(--ag-deep)",
+          ink: "var(--ag-ink)",
+          glass: "var(--ag-glass)",
+          border: "var(--ag-glass-border)",
           secondary: "var(--ag-secondary)",
           bg: "var(--ag-bg)",
           surface: "var(--ag-surface)",
           text: "var(--ag-text)",
-          border: "var(--ag-border)",
           danger: "var(--ag-danger)",
         },
       },

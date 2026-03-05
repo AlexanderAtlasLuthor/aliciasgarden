@@ -4,6 +4,8 @@ import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
 import { getPlants, type Plant } from "@/lib/api"
 
+export const runtime = "edge"
+
 export default async function GardenPage() {
   let plants: Plant[] = []
   let hasError = false

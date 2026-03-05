@@ -107,7 +107,9 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
       headers.set("Content-Type", "application/json")
     }
 
-    const res = await fetch(`${getBaseUrl()}${path}`, {
+    const requestUrl = path.startsWith("/api/") ? path : `${getBaseUrl()}${path}`
+
+    const res = await fetch(requestUrl, {
       ...init,
       cache: "no-store",
       headers,
@@ -207,7 +209,7 @@ export async function sendChatMessage(input: {
   thread_id?: string
 }): Promise<{ thread_id: string; reply: string }> {
   const data = await request<ApiOk<{ thread_id: string; reply: string }>>(
-    "/chat/send",
+    "/api/toni",
     {
       method: "POST",
       body: JSON.stringify(input)

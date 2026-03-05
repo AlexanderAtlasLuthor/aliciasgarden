@@ -10,14 +10,57 @@ function normalizeOptionalString(value: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-function normalizeWateringInterval(value: string): number | null {
-  const trimmed = value.trim()
-  if (!trimmed) {
-    return null
+type PlantFormInput = {
+  nickname: string
+  wateringIntervalDays: string
+}
+
+type PlantFormErrors = {
+  nickname?: string
+  wateringIntervalDays?: string
+}
+
+type PlantFormValidationResult = {
+  errors: PlantFormErrors
+  values: {
+    nickname: string
+    watering_interval_days?: number
+  }
+}
+
+function validatePlantForm(input: PlantFormInput): PlantFormValidationResult {
+  const errors: PlantFormErrors = {}
+
+  const trimmedNickname = input.nickname.trim()
+  if (!trimmedNickname) {
+    errors.nickname = "El nombre (nickname) es obligatorio."
+  } else if (trimmedNickname.length < 2 || trimmedNickname.length > 40) {
+    errors.nickname = "El nombre debe tener entre 2 y 40 caracteres."
   }
 
-  const parsed = Number(trimmed)
-  return Number.isFinite(parsed) ? parsed : null
+  const trimmedWateringInterval = input.wateringIntervalDays.trim()
+  let wateringIntervalDays: number | undefined
+
+  if (trimmedWateringInterval) {
+    const isInteger = /^\d+$/.test(trimmedWateringInterval)
+    const parsed = Number(trimmedWateringInterval)
+
+    if (!isInteger || !Number.isInteger(parsed)) {
+      errors.wateringIntervalDays = "El intervalo de riego debe ser un numero entero."
+    } else if (parsed < 1 || parsed > 365) {
+      errors.wateringIntervalDays = "El intervalo de riego debe estar entre 1 y 365 dias."
+    } else {
+      wateringIntervalDays = parsed
+    }
+  }
+
+  return {
+    errors,
+    values: {
+      nickname: trimmedNickname,
+      watering_interval_days: wateringIntervalDays
+    }
+  }
 }
 
 export default function NewPlantPage() {
@@ -30,37 +73,51 @@ export default function NewPlantPage() {
   const [wateringIntervalDays, setWateringIntervalDays] = useState("")
   const [notes, setNotes] = useState("")
 
-  const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<PlantFormErrors>({})
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const trimmedNickname = nickname.trim()
-    if (!trimmedNickname) {
-      setError("El nombre (nickname) es requerido.")
+    const validation = validatePlantForm({
+      nickname,
+      wateringIntervalDays
+    })
+
+    if (Object.keys(validation.errors).length > 0) {
+      setFieldErrors(validation.errors)
       return
     }
 
-    setError("")
+    setFieldErrors({})
     setSubmitError("")
     setIsSubmitting(true)
 
     try {
       await createPlant({
-        nickname: trimmedNickname,
+        nickname: validation.values.nickname,
         species_common: normalizeOptionalString(speciesCommon),
         location: normalizeOptionalString(location),
         light: normalizeOptionalString(light),
-        watering_interval_days: normalizeWateringInterval(wateringIntervalDays),
+        watering_interval_days: validation.values.watering_interval_days,
         notes: normalizeOptionalString(notes)
       })
 
       router.push("/garden")
       router.refresh()
-    } catch {
-      setSubmitError("Ups, no se pudo guardar. Intenta de nuevo.")
+    } catch (error: unknown) {
+      const fallbackMessage = "Ups, no se pudo guardar. Intenta de nuevo."
+
+      if (error && typeof error === "object" && "message" in error) {
+        const message = (error as { message?: unknown }).message
+        if (typeof message === "string" && message.trim()) {
+          setSubmitError(message)
+          return
+        }
+      }
+
+      setSubmitError(fallbackMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -78,11 +135,22 @@ export default function NewPlantPage() {
       <form
         onSubmit={handleSubmit}
         className="bg-white border rounded-2xl shadow-sm p-4 space-y-4"
+        aria-live="polite"
       >
         {submitError ? (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {submitError}
-          </p>
+          <div
+            role="alert"
+            className="space-y-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
+            <p>{submitError}</p>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : null}
 
         <div className="space-y-1">
@@ -93,10 +161,22 @@ export default function NewPlantPage() {
             id="nickname"
             type="text"
             value={nickname}
-            onChange={(event) => setNickname(event.target.value)}
+            onChange={(event) => {
+              setNickname(event.target.value)
+              if (fieldErrors.nickname) {
+                setFieldErrors((current) => ({ ...current, nickname: undefined }))
+              }
+            }}
             className="w-full rounded-xl border px-3 py-2 text-sm"
+            aria-invalid={Boolean(fieldErrors.nickname)}
+            aria-describedby={fieldErrors.nickname ? "nickname-error" : undefined}
             required
           />
+          {fieldErrors.nickname ? (
+            <p id="nickname-error" role="alert" className="text-sm text-red-600">
+              {fieldErrors.nickname}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-1">
@@ -149,9 +229,33 @@ export default function NewPlantPage() {
             id="watering_interval_days"
             type="number"
             value={wateringIntervalDays}
-            onChange={(event) => setWateringIntervalDays(event.target.value)}
+            onChange={(event) => {
+              setWateringIntervalDays(event.target.value)
+              if (fieldErrors.wateringIntervalDays) {
+                setFieldErrors((current) => ({
+                  ...current,
+                  wateringIntervalDays: undefined
+                }))
+              }
+            }}
             className="w-full rounded-xl border px-3 py-2 text-sm"
+            min={1}
+            max={365}
+            step={1}
+            aria-invalid={Boolean(fieldErrors.wateringIntervalDays)}
+            aria-describedby={
+              fieldErrors.wateringIntervalDays ? "watering-interval-days-error" : undefined
+            }
           />
+          {fieldErrors.wateringIntervalDays ? (
+            <p
+              id="watering-interval-days-error"
+              role="alert"
+              className="text-sm text-red-600"
+            >
+              {fieldErrors.wateringIntervalDays}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-1">
@@ -166,8 +270,6 @@ export default function NewPlantPage() {
             rows={4}
           />
         </div>
-
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
         <button
           type="submit"

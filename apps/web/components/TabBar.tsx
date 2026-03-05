@@ -8,11 +8,22 @@ import { TABS } from "@/lib/nav"
 export default function TabBar() {
   const pathname = usePathname()
 
+  const isTabActive = (href: string): boolean => {
+    if (href === "/home") {
+      return pathname === href
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t bg-white">
+    <div
+      className="fixed bottom-0 left-0 right-0 border-t bg-white"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="max-w-md mx-auto grid grid-cols-5 text-sm">
         {TABS.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = isTabActive(tab.href)
 
           return (
             <Link

@@ -5,11 +5,19 @@ import { getPlants, type Plant } from "@/lib/api"
 export default async function GardenPage() {
   let plants: Plant[] = []
   let hasError = false
+  let errorMessage = "Ups, no pudimos cargar tus plantas. Intenta de nuevo."
 
   try {
     plants = await getPlants()
-  } catch {
+  } catch (error: unknown) {
     hasError = true
+
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message
+      if (typeof message === "string" && message.trim()) {
+        errorMessage = message
+      }
+    }
   }
 
   return (
@@ -28,9 +36,7 @@ export default async function GardenPage() {
 
       {hasError ? (
         <section className="bg-white border rounded-2xl shadow-sm p-4">
-          <p className="text-sm text-red-700">
-            Ups, no pudimos cargar tus plantas. Intenta de nuevo.
-          </p>
+          <p className="text-sm text-red-700">{errorMessage}</p>
         </section>
       ) : null}
 

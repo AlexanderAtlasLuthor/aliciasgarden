@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 
 import { getThreadMessages, getThreads, sendChatMessage } from "@/lib/api"
 
@@ -14,7 +14,11 @@ export default function ToniPage() {
   const [messages, setMessages] = useState<UiMessage[]>([])
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null)
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const loadInitialThread = async () => {
@@ -40,13 +44,69 @@ export default function ToniPage() {
         }
 
         setMessages(uiMessages)
-      } catch {
-        setError("Ups, no pudimos cargar tus mensajes. Intenta de nuevo.")
+      } catch (error: unknown) {
+        const fallbackMessage = "Ups, no pudimos cargar tus mensajes. Intenta de nuevo."
+
+        if (error && typeof error === "object" && "message" in error) {
+          const message = (error as { message?: unknown }).message
+          if (typeof message === "string" && message.trim()) {
+            setLoadError(message)
+            return
+          }
+        }
+
+        setLoadError(fallbackMessage)
       }
     }
 
     void loadInitialThread()
   }, [])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages, isSending, threadId, sendError])
+
+  const sendMessage = async (message: string, appendUserMessage: boolean) => {
+    if (isSending) {
+      return
+    }
+
+    setIsSending(true)
+    setSendError(null)
+    setLastUserMessage(message)
+
+    if (appendUserMessage) {
+      setMessages((current) => [...current, { role: "user", content: message }])
+    }
+
+    try {
+      const result = await sendChatMessage({
+        message,
+        thread_id: threadId ?? undefined
+      })
+
+      setThreadId(result.thread_id)
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: result.reply }
+      ])
+      setLastUserMessage(null)
+    } catch (error: unknown) {
+      const fallbackMessage = "Toni esta ocupado, intenta en un momento."
+
+      if (error && typeof error === "object" && "message" in error) {
+        const messageText = (error as { message?: unknown }).message
+        if (typeof messageText === "string" && messageText.trim()) {
+          setSendError(messageText)
+          return
+        }
+      }
+
+      setSendError(fallbackMessage)
+    } finally {
+      setIsSending(false)
+    }
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -56,46 +116,39 @@ export default function ToniPage() {
       return
     }
 
-    setError(null)
-    setIsSending(true)
+    setLoadError(null)
     setInput("")
-    setMessages((current) => [...current, { role: "user", content: trimmedMessage }])
+    await sendMessage(trimmedMessage, true)
+  }
 
-    try {
-      const result = await sendChatMessage({
-        message: trimmedMessage,
-        thread_id: threadId ?? undefined
-      })
-
-      setThreadId(result.thread_id)
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: result.reply }
-      ])
-    } catch {
-      setError("Toni esta ocupado, intenta en un momento.")
-    } finally {
-      setIsSending(false)
+  const handleRetry = async () => {
+    if (!lastUserMessage) {
+      return
     }
+
+    await sendMessage(lastUserMessage, false)
   }
 
   return (
-    <div className="space-y-4 pb-24">
+    <div
+      className="space-y-4"
+      style={{ paddingBottom: "calc(10rem + env(safe-area-inset-bottom))" }}
+    >
       <section className="space-y-1">
         <h1 className="text-2xl font-semibold">Toni</h1>
         <p className="text-sm text-gray-600">Tu asistente para cuidar mejor tus plantas.</p>
       </section>
 
-      {error ? (
+      {loadError ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+          {loadError}
         </p>
       ) : null}
 
       <section className="space-y-3">
         {messages.length === 0 ? (
           <div className="bg-white border rounded-2xl shadow-sm p-4 space-y-1">
-            <p className="font-medium">Preguntale algo a Toni</p>
+            <p className="font-medium">Pregúntale algo a Toni</p>
             <p className="text-sm text-gray-600">
               Pide ayuda con riego, luz o cuidados de tus plantas.
             </p>
@@ -118,11 +171,43 @@ export default function ToniPage() {
             </div>
           ))
         )}
+
+        {isSending ? (
+          <div className="flex justify-start" aria-live="polite">
+            <div className="max-w-[85%] rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 shadow-sm">
+              Toni esta escribiendo...
+            </div>
+          </div>
+        ) : null}
+
+        {sendError ? (
+          <div className="flex justify-start" role="alert" aria-live="polite">
+            <div className="max-w-[85%] space-y-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm">
+              <p>{sendError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleRetry()
+                }}
+                disabled={isSending || !lastUserMessage}
+                className="inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <div ref={messagesEndRef} aria-hidden="true" />
       </section>
 
       <form
         onSubmit={handleSubmit}
-        className="fixed bottom-16 left-0 right-0 border-t bg-white px-4 py-3"
+        className="fixed left-0 right-0 border-t bg-white px-4 py-3"
+        style={{
+          bottom: "calc(3.75rem + env(safe-area-inset-bottom))",
+          paddingBottom: "env(safe-area-inset-bottom)"
+        }}
       >
         <div className="mx-auto flex max-w-md gap-2">
           <input

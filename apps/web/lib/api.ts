@@ -28,7 +28,19 @@ export type Plant = {
   light: string | null
   watering_interval_days: number | null
   notes: string | null
+  cover_photo_path?: string | null
   created_at: string
+}
+
+export type PlantPhoto = {
+  id: string
+  profile_id: string
+  plant_id: string
+  storage_path: string
+  caption: string | null
+  taken_at: string | null
+  created_at: string
+  url: string
 }
 
 export type ChatThread = {
@@ -113,7 +125,12 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
     headers.set("Accept", "application/json")
 
     const method = (init.method ?? "GET").toUpperCase()
-    if (method !== "GET" && init.body != null && !headers.has("Content-Type")) {
+    if (
+      method !== "GET" &&
+      init.body != null &&
+      !(init.body instanceof FormData) &&
+      !headers.has("Content-Type")
+    ) {
       headers.set("Content-Type", "application/json")
     }
 
@@ -268,6 +285,62 @@ export async function deletePlantEvent(eventId: string): Promise<void> {
   await request<ApiOk<Record<string, never>>>(`/events/${encodedEventId}`, {
     method: "DELETE"
   })
+}
+
+export async function getPlantPhotos(plantId: string): Promise<PlantPhoto[]> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ photos: PlantPhoto[] }>>(
+    `/plants/${encodedPlantId}/photos`
+  )
+
+  if (!Array.isArray(data.photos)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las fotos de la planta."
+    )
+  }
+
+  return data.photos
+}
+
+export async function uploadPlantPhoto(
+  plantId: string,
+  input: {
+    file: File
+    caption?: string
+    taken_at?: string
+  }
+): Promise<PlantPhoto> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const formData = new FormData()
+  formData.set("file", input.file)
+
+  const caption = input.caption?.trim()
+  if (caption) {
+    formData.set("caption", caption)
+  }
+
+  const takenAt = input.taken_at?.trim()
+  if (takenAt) {
+    formData.set("taken_at", takenAt)
+  }
+
+  const data = await request<ApiOk<{ photo: PlantPhoto }>>(
+    `/plants/${encodedPlantId}/photos`,
+    {
+      method: "POST",
+      body: formData
+    }
+  )
+
+  if (!data.photo) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio la foto registrada."
+    )
+  }
+
+  return data.photo
 }
 
 export async function getThreads(): Promise<ChatThread[]> {

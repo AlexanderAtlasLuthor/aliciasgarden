@@ -44,12 +44,13 @@ function formatDateOnly(value: string): string {
 
 function eventLabel(type: CareEvent["type"]): string {
   if (type === "water") return "Riego"
-  if (type === "fertilize") return "Fertilizacion"
+  if (type === "fertilize") return "Abono"
   if (type === "prune") return "Poda"
   if (type === "repot") return "Trasplante"
   if (type === "pest") return "Plaga"
   if (type === "treatment") return "Tratamiento"
-  return "Nota"
+  if (type === "note") return "Nota"
+  return "Evento"
 }
 
 function eventIcon(type: CareEvent["type"]): string {
@@ -59,7 +60,8 @@ function eventIcon(type: CareEvent["type"]): string {
   if (type === "repot") return "🪴"
   if (type === "pest") return "🐛"
   if (type === "treatment") return "🩹"
-  return "📝"
+  if (type === "note") return "📝"
+  return "📌"
 }
 
 function eventDetailText(details: CareEvent["details"]): string | null {
@@ -67,7 +69,7 @@ function eventDetailText(details: CareEvent["details"]): string | null {
     return null
   }
 
-  const candidates = ["text", "note", "message", "comment", "details"]
+  const candidates = ["text", "notes", "note", "message", "comment", "details"]
   for (const key of candidates) {
     const value = details[key]
     if (typeof value === "string" && value.trim()) {
@@ -83,6 +85,16 @@ type WaterSnackbarState = {
   canUndo: boolean
 }
 
+const EVENT_TYPE_OPTIONS: Array<{ type: CareEvent["type"]; label: string }> = [
+  { type: "water", label: "Riego" },
+  { type: "fertilize", label: "Abono" },
+  { type: "prune", label: "Poda" },
+  { type: "repot", label: "Trasplante" },
+  { type: "pest", label: "Plaga" },
+  { type: "treatment", label: "Tratamiento" },
+  { type: "note", label: "Nota" },
+]
+
 export default function PlantDetailPage() {
   const params = useParams<{ plantId: string }>()
   const plantId = params?.plantId ?? ""
@@ -90,8 +102,10 @@ export default function PlantDetailPage() {
   const [plant, setPlant] = useState<Plant | null>(null)
   const [events, setEvents] = useState<CareEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isRegisteringWater, setIsRegisteringWater] = useState(false)
-  const [isUndoingWater, setIsUndoingWater] = useState(false)
+  const [selectedEventType, setSelectedEventType] = useState<CareEvent["type"]>("water")
+  const [eventText, setEventText] = useState("")
+  const [isRegisteringEvent, setIsRegisteringEvent] = useState(false)
+  const [isUndoingEvent, setIsUndoingEvent] = useState(false)
   const [lastCreatedEventId, setLastCreatedEventId] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState<WaterSnackbarState | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -211,40 +225,49 @@ export default function PlantDetailPage() {
   }, [lastWater, nextRecommendedDate, plant?.watering_interval_days])
 
   const onRegisterWater = useCallback(async () => {
-    if (!plantId || isRegisteringWater) {
+    if (!plantId || isRegisteringEvent) {
       return
     }
 
-    setIsRegisteringWater(true)
+    setIsRegisteringEvent(true)
     setSnackbar(null)
 
     try {
-      const createdEvent = await createPlantEvent(plantId, { type: "water" })
+      const details =
+        selectedEventType === "note"
+          ? { text: eventText }
+          : { notes: eventText }
+
+      const createdEvent = await createPlantEvent(plantId, {
+        type: selectedEventType,
+        details,
+      })
       const refreshedEvents = await getPlantEvents(plantId, 30)
       const sortedEvents = [...refreshedEvents].sort(
         (a, b) => new Date(b.event_at).getTime() - new Date(a.event_at).getTime()
       )
 
       setEvents(sortedEvents)
+      setEventText("")
       setLastCreatedEventId(createdEvent.id)
-      showSnackbar("Riego registrado.", true, 8_000)
+      showSnackbar(`Evento registrado: ${eventLabel(selectedEventType)}`, true, 8_000)
     } catch (error: unknown) {
       if (isAPIError(error) && error.message.trim()) {
         showSnackbar(error.message, false, 5_000)
       } else {
-        showSnackbar("No pudimos registrar el riego. Intenta de nuevo.", false, 5_000)
+        showSnackbar("No pudimos registrar el evento. Intenta de nuevo.", false, 5_000)
       }
     } finally {
-      setIsRegisteringWater(false)
+      setIsRegisteringEvent(false)
     }
-  }, [isRegisteringWater, plantId, showSnackbar])
+  }, [eventText, isRegisteringEvent, plantId, selectedEventType, showSnackbar])
 
   const onUndoWater = useCallback(async () => {
-    if (!plantId || !lastCreatedEventId || isUndoingWater) {
+    if (!plantId || !lastCreatedEventId || isUndoingEvent) {
       return
     }
 
-    setIsUndoingWater(true)
+    setIsUndoingEvent(true)
 
     try {
       await deletePlantEvent(lastCreatedEventId)
@@ -255,17 +278,22 @@ export default function PlantDetailPage() {
 
       setEvents(sortedEvents)
       setLastCreatedEventId(null)
-      showSnackbar("Riego deshecho.", false, 2_000)
+      showSnackbar("Evento deshecho.", false, 2_000)
     } catch (error: unknown) {
       if (isAPIError(error) && error.message.trim()) {
         showSnackbar(error.message, false, 5_000)
       } else {
-        showSnackbar("No pudimos deshacer el riego. Intenta de nuevo.", false, 5_000)
+        showSnackbar("No pudimos deshacer el evento. Intenta de nuevo.", false, 5_000)
       }
     } finally {
-      setIsUndoingWater(false)
+      setIsUndoingEvent(false)
     }
-  }, [isUndoingWater, lastCreatedEventId, plantId, showSnackbar])
+  }, [isUndoingEvent, lastCreatedEventId, plantId, showSnackbar])
+
+  const onClearEventComposer = useCallback(() => {
+    setSelectedEventType("water")
+    setEventText("")
+  }, [])
 
   if (isLoading) {
     return (
@@ -367,15 +395,63 @@ export default function PlantDetailPage() {
         <Card className="rounded-xl p-4" variant="medium">
           <CardContent className="space-y-3 p-0">
             <h2 className="text-primary text-lg font-semibold">Acciones rapidas</h2>
+            <div className="space-y-3 rounded-[var(--radius-3)] border border-white/10 bg-white/5 p-3">
+              <h3 className="text-primary text-sm font-medium">Registrar evento</h3>
+              <div className="flex flex-wrap gap-2">
+                {EVENT_TYPE_OPTIONS.map((option) => {
+                  const isSelected = selectedEventType === option.type
+
+                  return (
+                    <Button
+                      key={option.type}
+                      type="button"
+                      size="sm"
+                      variant={isSelected ? "primary" : "ghost"}
+                      className="rounded-full"
+                      onClick={() => setSelectedEventType(option.type)}
+                      disabled={isRegisteringEvent}
+                    >
+                      {eventIcon(option.type)} {option.label}
+                    </Button>
+                  )
+                })}
+              </div>
+
+              <label className="space-y-1">
+                <span className="text-secondary text-xs">
+                  {selectedEventType === "note" ? "Texto de la nota (opcional)" : "Notas (opcional)"}
+                </span>
+                <input
+                  type="text"
+                  value={eventText}
+                  onChange={(event) => setEventText(event.target.value)}
+                  placeholder={selectedEventType === "note" ? "Ej. Hoja nueva en el brote" : "Ej. Humedad estable"}
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/45"
+                  disabled={isRegisteringEvent}
+                />
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => void onRegisterWater()} disabled={isRegisteringEvent}>
+                  {isRegisteringEvent ? "Guardando..." : "Guardar evento"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClearEventComposer}
+                  disabled={isRegisteringEvent}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Button onClick={() => void onRegisterWater()} disabled={isRegisteringWater}>
-                {isRegisteringWater ? "Registrando..." : "Registrar riego"}
-              </Button>
               <Button variant="secondary" disabled>
                 Añadir nota
               </Button>
-              <Button variant="secondary" disabled>
-                Subir foto
+              <Button asChild variant="secondary">
+                <Link href={`/garden/${plant.id}/photos`}>Subir foto</Link>
               </Button>
               <Button variant="secondary" disabled>
                 Preguntar a Toni
@@ -436,9 +512,9 @@ export default function PlantDetailPage() {
                   size="sm"
                   variant="ghost"
                   onClick={() => void onUndoWater()}
-                  disabled={isUndoingWater}
+                  disabled={isUndoingEvent}
                 >
-                  {isUndoingWater ? "Deshaciendo..." : "Deshacer"}
+                  {isUndoingEvent ? "Deshaciendo..." : "Deshacer"}
                 </Button>
               ) : null}
             </GlassSurface>

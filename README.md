@@ -80,7 +80,94 @@ Esto protege:
 Usado para:
 
 - Base de datos
-- Storage (futuro)
+- Storage (fotos por planta)
+
+Bucket requerido para fotos:
+
+- `plant-photos` (private)
+
+Se crea de forma idempotente en la migracion:
+
+- `supabase/migrations/20260305100000_add_plant_photos.sql`
+
+Si en un entorno ya provisionado el bucket no existe, ejecuta en SQL Editor de Supabase:
+
+```sql
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+   'plant-photos',
+   'plant-photos',
+   false,
+   8388608,
+   array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update
+set
+   public = excluded.public,
+   file_size_limit = excluded.file_size_limit,
+   allowed_mime_types = excluded.allowed_mime_types;
+```
+
+### Bootstrap remoto sin `supabase link`
+
+Para aplicar migraciones y asegurar el bucket `plant-photos` en el proyecto remoto configurado en `apps/worker/.dev.vars`:
+
+```bash
+node scripts/bootstrap-supabase-photos.mjs
+```
+
+Detalles:
+
+- Lee `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` desde variables de entorno o `apps/worker/.dev.vars`.
+- Aplica todas las migraciones de `supabase/migrations` en orden.
+- Asegura que el bucket `plant-photos` exista y sea `private`.
+- No requiere `supabase link`.
+- Funciona como script Node en Windows, macOS y Linux.
+
+Notas de compatibilidad:
+
+- Primero intenta ejecutar SQL remoto por HTTP (`/pg/v1/query`).
+- Si ese endpoint no esta disponible en tu proyecto, usa fallback `psql` con `SUPABASE_DB_URL` definido en entorno o en `apps/worker/.dev.vars`.
+
+### Si falla por `SUPABASE_DB_URL`
+
+Agrega en `apps/worker/.dev.vars` alguna de estas opciones:
+
+```txt
+SUPABASE_DB_URL=postgres://postgres:<PASSWORD>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
+```
+
+o bien deja que el script la construya automaticamente con:
+
+```txt
+SUPABASE_DB_PASSWORD=<PASSWORD>
+```
+
+o:
+
+```txt
+SUPABASE_DB_PASS=<PASSWORD>
+```
+
+Verificacion recomendada:
+
+```sql
+select to_regclass('public.plant_photos') is not null as plant_photos_exists;
+
+select exists (
+   select 1
+   from information_schema.columns
+   where table_schema = 'public'
+      and table_name = 'plants'
+      and column_name = 'cover_photo_path'
+) as cover_photo_path_exists;
+```
+
+Storage API (con service role):
+
+```txt
+GET {SUPABASE_URL}/storage/v1/bucket/plant-photos
+```
 
 ---
 

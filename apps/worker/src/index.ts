@@ -6,6 +6,7 @@ import { rateLimit } from './middleware/rateLimit';
 import { chatRoutes } from './routes/chat';
 import { healthRoutes } from './routes/health';
 import { plantEventsRoutes } from './routes/plantEvents';
+import { plantPhotosRoutes } from './routes/plantPhotos';
 import { plantsRoutes } from './routes/plants';
 import type { Env } from './types/env';
 
@@ -22,6 +23,7 @@ app.get('/', (c) => {
 app.route('/', healthRoutes);
 app.route('/', plantsRoutes);
 app.route('/', plantEventsRoutes);
+app.route('/', plantPhotosRoutes);
 app.route('/', chatRoutes);
 
 export default app;

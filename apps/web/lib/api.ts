@@ -46,6 +46,16 @@ export type ChatMessage = {
   created_at: string
 }
 
+export type CareEvent = {
+  id: string
+  profile_id: string
+  plant_id: string
+  type: "water" | "fertilize" | "prune" | "repot" | "pest" | "treatment" | "note"
+  details: Record<string, unknown> | null
+  event_at: string
+  created_at: string
+}
+
 function getBaseUrl(): string {
   if (!BASE_URL) {
     throw {
@@ -190,6 +200,74 @@ export async function createPlant(input: {
   })
 
   return data.plant
+}
+
+export async function getPlantById(plantId: string): Promise<Plant> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ plant: Plant }>>(`/plants/${encodedPlantId}`)
+
+  if (!data.plant) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio la planta solicitada."
+    )
+  }
+
+  return data.plant
+}
+
+export async function getPlantEvents(
+  plantId: string,
+  limit = 30
+): Promise<CareEvent[]> {
+  const normalizedLimit = Math.min(Math.max(Math.trunc(limit), 1), 50)
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ events: CareEvent[] }>>(
+    `/plants/${encodedPlantId}/events?limit=${normalizedLimit}`
+  )
+
+  if (!Array.isArray(data.events)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio los eventos de la planta."
+    )
+  }
+
+  return data.events
+}
+
+export async function createPlantEvent(
+  plantId: string,
+  input: {
+    type: CareEvent["type"]
+    details?: Record<string, unknown>
+    event_at?: string
+  }
+): Promise<CareEvent> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ event: CareEvent }>>(
+    `/plants/${encodedPlantId}/events`,
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    }
+  )
+
+  if (!data.event) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el evento registrado."
+    )
+  }
+
+  return data.event
+}
+
+export async function deletePlantEvent(eventId: string): Promise<void> {
+  const encodedEventId = encodeURIComponent(eventId)
+  await request<ApiOk<Record<string, never>>>(`/events/${encodedEventId}`, {
+    method: "DELETE"
+  })
 }
 
 export async function getThreads(): Promise<ChatThread[]> {

@@ -85,6 +85,24 @@ chatRoutes.get('/chat/threads/:id', async (c) => {
 
   try {
     const supabase = getSupabase(c.env);
+
+    const { data: thread, error: threadError } = await supabase
+      .from('chat_threads')
+      .select('id')
+      .eq('id', threadId)
+      .eq('profile_id', c.env.PROFILE_ID)
+      .maybeSingle();
+
+    if (threadError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo validar el thread.', 500, {
+        hint: threadError.message,
+      });
+    }
+
+    if (!thread) {
+      return jsonError(c, 'NOT_FOUND', 'Thread no encontrado.', 404);
+    }
+
     const { data: messages, error } = await supabase
       .from('chat_messages')
       .select('*')

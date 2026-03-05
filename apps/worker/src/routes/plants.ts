@@ -72,6 +72,37 @@ plantsRoutes.get('/plants', async (c) => {
 	}
 });
 
+plantsRoutes.get('/plants/:id', async (c) => {
+	const plantId = c.req.param('id');
+
+	try {
+		const supabase = getSupabase(c.env);
+		const { data: plant, error } = await supabase
+			.from('plants')
+			.select('*')
+			.eq('id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID)
+			.maybeSingle();
+
+		if (error) {
+			return jsonError(c, 'DB_ERROR', 'No se pudo obtener la planta.', 500, {
+				hint: error.message,
+			});
+		}
+
+		if (!plant) {
+			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
+		}
+
+		return jsonOk(c, { plant });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		return jsonError(c, 'DB_ERROR', 'No se pudo obtener la planta.', 500, {
+			hint: message,
+		});
+	}
+});
+
 plantsRoutes.post('/plants', async (c) => {
 	const parsedBody = await safeParseJson(c);
 	const body = asObject(parsedBody);

@@ -1,6 +1,6 @@
 # Alicia's Garden - Semana 1
 
-## Estado de ejecucion actualizado (Plan + Progreso real)
+Estado de ejecucion actualizado (Plan + Progreso real)
 
 ---
 
@@ -12,7 +12,7 @@ Construir las **fundaciones completas del producto** para que exista una aplicac
 
 - Abrir la aplicacion
 - Navegar entre secciones principales
-- Hablar con Toni (IA de jardineria)
+- Hablar con **Toni (IA de jardineria)**
 - Guardar el historial del chat
 - Crear plantas
 - Ver su jardin
@@ -24,20 +24,19 @@ Todo esto **sin sistema de login**.
 
 # Estado general del proyecto
 
-| Area                       | Estado                    |
-| -------------------------- | ------------------------- |
-| Arquitectura               | ✅ Definida                |
-| Backend Worker             | ✅ Mayormente implementado |
-| Persistencia DB            | ✅ Funcionando             |
-| API Plants                 | ✅ Completa                |
-| Supabase CLI + Migraciones | ✅ Configurado             |
-| Chat Toni                  | ❌ No iniciado             |
-| Frontend Next.js           | ❌ No iniciado             |
-| Deploy                     | ❌ No iniciado             |
+| Area                       | Estado         |
+| -------------------------- | -------------- |
+| Arquitectura               | ✅ Definida     |
+| Backend Worker             | ✅ Implementado |
+| Persistencia DB            | ✅ Funcionando  |
+| API Plants                 | ✅ Completa     |
+| Supabase CLI + Migraciones | ✅ Configurado  |
+| Chat Toni API              | ✅ Implementado |
+| Frontend Next.js           | ❌ No iniciado  |
+| Deploy                     | ❌ No iniciado  |
 
-Progreso estimado:
-
-**Backend: ~90% completo**
+**Progreso estimado:**
+Backend: **~100% completo**
 
 ---
 
@@ -45,7 +44,7 @@ Progreso estimado:
 
 Estas decisiones eliminan complejidad innecesaria para esta app.
 
-### Usuario unico
+## Usuario unico
 
 ```txt
 profile_id = "default_profile"
@@ -55,7 +54,7 @@ No existe autenticacion.
 
 ---
 
-### Backend como BFF
+## Backend como BFF
 
 El frontend **NO accede a Supabase directamente**.
 
@@ -76,18 +75,28 @@ Esto protege:
 
 ---
 
-### Supabase
+## Supabase
 
 Usado para:
 
 - Base de datos
-- Storage
+- Storage (futuro)
 
 ---
 
-### IA
+## IA
 
-La IA vive **solo en el Worker**.
+La IA vive **exclusivamente en el Worker**.
+
+```txt
+Frontend
+   ↓
+Worker
+   ↓
+OpenAI
+```
+
+Las claves **nunca llegan al cliente**.
 
 ---
 
@@ -116,7 +125,7 @@ aliciasgarden
 Construir un **Backend for Frontend (BFF)** que:
 
 - encapsule la logica
-- maneje la DB
+- maneje la base de datos
 - llame a la IA
 - exponga endpoints simples al frontend
 
@@ -181,8 +190,7 @@ wrangler dev
 
 Servidor levanta correctamente.
 
-Estado:
-
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -191,13 +199,13 @@ Estado:
 
 ## Objetivo
 
-Crear las utilidades base que usara toda la API.
+Crear utilidades base que usara toda la API.
 
 ---
 
 ## src/types/env.ts
 
-Define:
+Bindings definidos:
 
 ```txt
 SUPABASE_URL
@@ -211,7 +219,7 @@ AI_API_KEY
 
 ## src/lib/supabase.ts
 
-Cliente Supabase centralizado:
+Cliente Supabase centralizado.
 
 ```txt
 getSupabase(env)
@@ -226,7 +234,7 @@ Configuracion:
 
 ## src/lib/http.ts
 
-Helpers HTTP:
+Helpers HTTP implementados:
 
 ```txt
 jsonOk()
@@ -240,15 +248,18 @@ Formato estandar de respuesta:
 {
  ok: true
 }
+```
 
+Errores:
+
+```txt
 {
  ok:false,
  error:{ code,message }
 }
 ```
 
-Estado:
-
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -257,13 +268,16 @@ Estado:
 
 ## Objetivo
 
-Infraestructura transversal.
+Infraestructura transversal para la API.
 
 ---
 
 ## errors.ts
 
-Captura errores y devuelve JSON consistente.
+Middleware global que:
+
+- captura excepciones
+- devuelve JSON consistente
 
 ---
 
@@ -288,7 +302,7 @@ OPTIONS -> 204
 
 ## rateLimit.ts
 
-Placeholder:
+Placeholder en memoria:
 
 ```txt
 60 requests/min
@@ -301,8 +315,7 @@ Error:
 429 RATE_LIMITED
 ```
 
-Estado:
-
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -328,8 +341,7 @@ curl /health -> 200
 OPTIONS /health -> 204
 ```
 
-Estado:
-
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -397,8 +409,128 @@ Respuesta:
 201 Created
 ```
 
-Estado:
+**Estado:**
+✅ COMPLETADO
 
+---
+
+# Subfase F - Chat API (Toni v0)
+
+Implementacion completa de conversacion persistente.
+
+## Endpoints implementados
+
+```txt
+POST /chat/send
+GET /chat/threads
+GET /chat/threads/:id
+```
+
+---
+
+## Flujo completo
+
+```txt
+User
+ ↓
+/chat/send
+ ↓
+Worker
+ ↓
+Supabase guarda mensaje user
+ ↓
+OpenAI
+ ↓
+Supabase guarda respuesta assistant
+ ↓
+API Response
+```
+
+---
+
+## Persistencia
+
+Tablas utilizadas:
+
+```txt
+chat_threads
+chat_messages
+```
+
+Cada mensaje queda almacenado.
+
+---
+
+## Servicio IA
+
+Archivo:
+
+```txt
+services/ai.ts
+```
+
+Modelo utilizado:
+
+```txt
+gpt-4o-mini
+```
+
+Fallback implementado si IA falla.
+
+---
+
+## Servicio Chat
+
+Archivo:
+
+```txt
+services/chat.ts
+```
+
+Responsable de:
+
+- crear threads
+- guardar mensajes
+- recuperar historial
+- llamar IA
+
+---
+
+## Router
+
+Archivo:
+
+```txt
+routes/chat.ts
+```
+
+Montado en:
+
+```txt
+index.ts
+```
+
+---
+
+## Verificacion E2E
+
+Pruebas realizadas:
+
+```txt
+POST /chat/send
+GET /chat/threads
+GET /chat/threads/:id
+```
+
+Resultados:
+
+- thread creado
+- mensajes guardados
+- historial recuperado
+
+Persistencia confirmada en Supabase.
+
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -423,7 +555,7 @@ supabase link --project-ref llykhzeuuwebmqjzkrkg
 
 ---
 
-# Migraciones
+## Migraciones
 
 Archivo:
 
@@ -431,15 +563,17 @@ Archivo:
 supabase/migrations/20260305035241_init_schema.sql
 ```
 
-Contiene:
+Contiene tablas:
 
-- plants
-- chat_threads
-- chat_messages
+```txt
+plants
+chat_threads
+chat_messages
+```
 
 ---
 
-# Migracion aplicada
+## Migracion aplicada
 
 ```txt
 supabase db push
@@ -451,7 +585,7 @@ Migracion aplicada correctamente.
 
 ---
 
-# Verificacion
+## Verificacion
 
 Tablas existentes:
 
@@ -463,33 +597,21 @@ chat_messages
 
 ---
 
-# Verificacion del Worker
-
-### GET /plants
+## Verificacion del Worker
 
 ```txt
-200 OK
-{ plants: [] }
+GET /plants
+-> 200 OK
 ```
-
----
-
-### POST /plants
 
 ```txt
-201 Created
+POST /plants
+-> 201 Created
 ```
-
----
-
-### GET /plants posterior
-
-Devuelve la planta creada.
 
 Persistencia confirmada.
 
-Estado:
-
+**Estado:**
 ✅ COMPLETADO
 
 ---
@@ -502,13 +624,16 @@ Estado:
 | Middleware        | ✅      |
 | Health endpoint   | ✅      |
 | Plants API        | ✅      |
+| Chat API          | ✅      |
 | Supabase conexion | ✅      |
 | Migraciones DB    | ✅      |
 | Persistencia      | ✅      |
 
 Progreso backend:
 
-**≈ 90%**
+```txt
+≈ 100%
+```
 
 ---
 
@@ -530,43 +655,37 @@ apps/web
    settings
 ```
 
-Componentes planeados:
+---
 
-- TabBar
-- Header
-- PlantCard
-- ChatView
-- Composer
+## Componentes planeados
+
+```txt
+TabBar
+Header
+PlantCard
+ChatView
+Composer
+MessageBubble
+```
 
 ---
 
-# 5. Chat Toni (pendiente)
+# 5. Integracion Web -> Worker
 
-Endpoints a implementar:
+Archivo futuro:
 
 ```txt
-POST /chat/send
-GET /chat/threads
-GET /chat/threads/:id
+apps/web/lib/api.ts
 ```
 
-Tablas usadas:
+Funciones:
 
 ```txt
-chat_threads
-chat_messages
-```
-
-Flujo:
-
-```txt
-User
- ↓
-Worker
- ↓
-AI
- ↓
-Guardar respuesta
+getPlants()
+createPlant()
+sendChatMessage()
+getThreads()
+getThread()
 ```
 
 ---
@@ -576,12 +695,18 @@ Guardar respuesta
 Pendiente:
 
 ```txt
-wrangler secret put SUPABASE_URL
-wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 wrangler deploy
 ```
 
-Frontend:
+Secrets:
+
+```txt
+wrangler secret put SUPABASE_URL
+wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+wrangler secret put AI_API_KEY
+```
+
+Frontend deploy:
 
 ```txt
 Cloudflare Pages
@@ -591,28 +716,21 @@ Cloudflare Pages
 
 # 7. Plan restante de Semana 1
 
-### Dia 3
+## Dia 3
 
 Construir UI Garden.
 
----
+## Dia 4
 
-### Dia 4
+UI Chat Toni.
 
-Backend Chat Toni.
+## Dia 5
 
----
+Integracion frontend -> Worker.
 
-### Dia 5
+## Dia 6-7
 
-UI Chat.
-
----
-
-### Dia 6-7
-
-Pulido.
-
+Pulido UI.
 Deploy.
 
 ---
@@ -621,17 +739,7 @@ Deploy.
 
 Ninguno.
 
-Infraestructura backend lista.
-
----
-
-# Proximo paso del proyecto
-
-Implementar:
-
-```txt
-Chat Toni v0
-```
+Infraestructura backend completamente funcional.
 
 ---
 
@@ -639,16 +747,36 @@ Chat Toni v0
 
 | Area     | Progreso |
 | -------- | -------- |
-| Backend  | 90%      |
+| Backend  | 100%     |
 | Database | 100%     |
 | Frontend | 0%       |
-| Chat     | 0%       |
+| Chat UI  | 0%       |
 | Deploy   | 0%       |
 
 ---
 
 # Proxima fase
 
-**Worker Chat API**
+## Frontend Next.js
 
-Implementar conversacion persistente.
+Construir la interfaz de usuario que consuma la API del Worker.
+
+Pantallas prioritarias:
+
+```txt
+/home
+/toni
+/garden
+```
+
+Objetivo:
+
+Permitir que la usuaria:
+
+- vea su jardin
+- cree plantas
+- converse con Toni
+
+---
+
+**Fin del estado actualizado de Semana 1.**

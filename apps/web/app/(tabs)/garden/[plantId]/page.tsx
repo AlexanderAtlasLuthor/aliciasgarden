@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import Button from "@/components/ui/Button"
@@ -10,10 +10,12 @@ import GlassSurface from "@/components/ui/GlassSurface"
 import MetricTile from "@/components/ui/MetricTile"
 import {
   createPlantEvent,
+  deletePlant,
   deletePlantEvent,
   getPlantById,
   getPlantEvents,
   isAPIError,
+  patchPlant,
   type CareEvent,
   type Plant,
 } from "@/lib/api"
@@ -97,6 +99,7 @@ const EVENT_TYPE_OPTIONS: Array<{ type: CareEvent["type"]; label: string }> = [
 
 export default function PlantDetailPage() {
   const params = useParams<{ plantId: string }>()
+  const router = useRouter()
   const plantId = params?.plantId ?? ""
 
   const [plant, setPlant] = useState<Plant | null>(null)
@@ -109,7 +112,15 @@ export default function PlantDetailPage() {
   const [lastCreatedEventId, setLastCreatedEventId] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState<WaterSnackbarState | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState("")
+  const [isSavingName, setIsSavingName] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [isDeletingPlant, setIsDeletingPlant] = useState(false)
+  const [deletePlantError, setDeletePlantError] = useState<string | null>(null)
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
   const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const nameInputRef = useRef<HTMLInputElement | null>(null)
 
   const clearSnackbarTimer = useCallback(() => {
     if (snackbarTimerRef.current) {
@@ -295,6 +306,93 @@ export default function PlantDetailPage() {
     setEventText("")
   }, [])
 
+  const onToggleFavorite = useCallback(async () => {
+    if (!plant || isTogglingFavorite) return
+    setIsTogglingFavorite(true)
+    try {
+      const updated = await patchPlant(plantId, { is_favorite: !plant.is_favorite })
+      setPlant(updated)
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        showSnackbar(error.message, false, 5_000)
+      } else {
+        showSnackbar("No se pudo actualizar favorito.", false, 5_000)
+      }
+    } finally {
+      setIsTogglingFavorite(false)
+    }
+  }, [isTogglingFavorite, plant, plantId, showSnackbar])
+
+  const onStartEditing = useCallback(() => {
+    if (!plant) return
+    setNameDraft(plant.nickname)
+    setNameError(null)
+    setIsEditingName(true)
+    requestAnimationFrame(() => nameInputRef.current?.focus())
+  }, [plant])
+
+  const onCancelEditing = useCallback(() => {
+    setIsEditingName(false)
+    setNameError(null)
+    if (plant) setNameDraft(plant.nickname)
+  }, [plant])
+
+  const onSaveName = useCallback(async () => {
+    if (isSavingName || !plant) return
+    const trimmed = nameDraft.trim()
+    if (trimmed.length < 2 || trimmed.length > 40) {
+      setNameError("El nombre debe tener entre 2 y 40 caracteres.")
+      return
+    }
+    setIsSavingName(true)
+    setNameError(null)
+    try {
+      const updated = await patchPlant(plantId, { nickname: trimmed })
+      setPlant(updated)
+      setIsEditingName(false)
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        setNameError(error.message)
+      } else {
+        setNameError("No se pudo actualizar el nombre.")
+      }
+    } finally {
+      setIsSavingName(false)
+    }
+  }, [isSavingName, nameDraft, plant, plantId])
+
+  const onDeletePlant = useCallback(async () => {
+    if (isDeletingPlant || !plantId) return
+    if (!confirm("¿Eliminar esta planta? Se borrarán también fotos y eventos. Esto no se puede deshacer.")) return
+    setDeletePlantError(null)
+    setIsDeletingPlant(true)
+    try {
+      await deletePlant(plantId)
+      router.push("/garden")
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        setDeletePlantError(error.message)
+      } else {
+        setDeletePlantError("No se pudo eliminar la planta.")
+      }
+    } finally {
+      setIsDeletingPlant(false)
+    }
+  }, [isDeletingPlant, plantId, router])
+
+  const onNameKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        void onSaveName()
+      } else if (e.key === "Escape") {
+        e.preventDefault()
+        onCancelEditing()
+      }
+    },
+    [onSaveName, onCancelEditing]
+  )
+
   if (isLoading) {
     return (
       <div className="ag-container ag-screen">
@@ -335,8 +433,80 @@ export default function PlantDetailPage() {
           <Button asChild variant="ghost" size="sm" className="w-fit">
             <Link href="/garden">Volver al jardin</Link>
           </Button>
-          <h1 className="text-primary text-2xl font-semibold tracking-tight">{plant.nickname}</h1>
+
+          {isEditingName ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={onNameKeyDown}
+                  disabled={isSavingName}
+                  maxLength={40}
+                  aria-label="Nombre de la planta"
+                  className="min-w-0 flex-1 rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-1.5 text-xl font-semibold text-white placeholder:text-white/45 focus:outline-none focus:ring-2 focus:ring-green-400/50 disabled:opacity-50"
+                />
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => void onSaveName()}
+                  disabled={isSavingName}
+                >
+                  {isSavingName ? "Guardando..." : "Guardar"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onCancelEditing}
+                  disabled={isSavingName}
+                >
+                  Cancelar
+                </Button>
+              </div>
+              {nameError ? (
+                <p className="text-sm text-red-400" role="alert">{nameError}</p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h1 className="text-primary text-2xl font-semibold tracking-tight">{plant.nickname}</h1>
+              <button
+                type="button"
+                onClick={() => void onToggleFavorite()}
+                disabled={isTogglingFavorite}
+                aria-label={plant.is_favorite ? "Quitar de favoritos" : "Marcar como favorita"}
+                className="text-xl leading-none transition-opacity disabled:opacity-50"
+              >
+                {plant.is_favorite ? "★" : "☆"}
+              </button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onStartEditing}
+                aria-label="Editar nombre de la planta"
+              >
+                Editar
+              </Button>
+            </div>
+          )}
+
           <p className="text-secondary text-sm">{plant.species_common ?? "Ficha de planta"}</p>
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-400 hover:text-red-300"
+              disabled={isDeletingPlant}
+              onClick={() => void onDeletePlant()}
+            >
+              {isDeletingPlant ? "Eliminando..." : "Eliminar planta"}
+            </Button>
+          </div>
+          {deletePlantError ? (
+            <p className="text-sm text-red-400" role="alert">{deletePlantError}</p>
+          ) : null}
         </section>
 
         <Card className="rounded-xl p-4" variant="strong">

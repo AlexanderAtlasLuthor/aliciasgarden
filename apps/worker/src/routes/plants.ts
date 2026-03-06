@@ -184,22 +184,54 @@ plantsRoutes.patch('/plants/:id', async (c) => {
 	const parsedBody = await safeParseJson(c);
 	const body = asObject(parsedBody);
 
-	if (!body || !('cover_photo_path' in body)) {
-		return jsonError(c, 'VALIDATION_ERROR', 'cover_photo_path es requerido.', 400);
+	const hasNickname = body !== null && 'nickname' in body;
+	const hasCover = body !== null && 'cover_photo_path' in body;
+	const hasFavorite = body !== null && 'is_favorite' in body;
+
+	if (!hasNickname && !hasCover && !hasFavorite) {
+		return jsonError(c, 'VALIDATION_ERROR', 'Se requiere al menos nickname, cover_photo_path o is_favorite.', 400);
 	}
 
-	const raw = body.cover_photo_path;
-	const coverPhotoPath = raw === null ? null : normalizeOptionalString(raw);
+	const updateFields: Record<string, unknown> = {};
 
-	if (raw !== null && coverPhotoPath === null) {
-		return jsonError(c, 'VALIDATION_ERROR', 'cover_photo_path debe ser un string no vacio o null.', 400);
+	// --- nickname validation ---
+	if (hasNickname) {
+		const rawNickname = body!.nickname;
+		if (typeof rawNickname !== 'string') {
+			return jsonError(c, 'VALIDATION_ERROR', 'nickname debe ser un string.', 400);
+		}
+		const trimmed = rawNickname.trim();
+		if (trimmed.length < 2 || trimmed.length > 40) {
+			return jsonError(c, 'VALIDATION_ERROR', 'nickname debe tener entre 2 y 40 caracteres.', 400);
+		}
+		updateFields.nickname = trimmed;
+	}
+
+	// --- cover_photo_path validation ---
+	if (hasCover) {
+		const raw = body!.cover_photo_path;
+		const coverPhotoPath = raw === null ? null : normalizeOptionalString(raw);
+
+		if (raw !== null && coverPhotoPath === null) {
+			return jsonError(c, 'VALIDATION_ERROR', 'cover_photo_path debe ser un string no vacio o null.', 400);
+		}
+		updateFields.cover_photo_path = coverPhotoPath;
+	}
+
+	// --- is_favorite validation ---
+	if (hasFavorite) {
+		const rawFavorite = body!.is_favorite;
+		if (typeof rawFavorite !== 'boolean') {
+			return jsonError(c, 'VALIDATION_ERROR', 'is_favorite debe ser un boolean.', 400);
+		}
+		updateFields.is_favorite = rawFavorite;
 	}
 
 	try {
 		const supabase = getSupabase(c.env);
 		const { data: plant, error } = await supabase
 			.from('plants')
-			.update({ cover_photo_path: coverPhotoPath })
+			.update(updateFields)
 			.eq('id', plantId)
 			.eq('profile_id', c.env.PROFILE_ID)
 			.select('*')
@@ -219,6 +251,109 @@ plantsRoutes.patch('/plants/:id', async (c) => {
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		return jsonError(c, 'DB_ERROR', 'No se pudo actualizar la planta.', 500, {
+			hint: message,
+		});
+	}
+});
+
+plantsRoutes.delete('/plants/:id', async (c) => {
+	const plantId = c.req.param('id');
+
+	if (!plantId.trim()) {
+		return jsonError(c, 'VALIDATION_ERROR', 'plantId es requerido.', 400);
+	}
+
+	try {
+		const supabase = getSupabase(c.env);
+
+		// 1. Confirm ownership
+		const { data: plant, error: selectError } = await supabase
+			.from('plants')
+			.select('id')
+			.eq('id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID)
+			.maybeSingle();
+
+		if (selectError) {
+			return jsonError(c, 'DB_ERROR', 'No se pudo validar la planta.', 500, {
+				hint: selectError.message,
+			});
+		}
+
+		if (!plant) {
+			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
+		}
+
+		// 2. Get all photos for storage cleanup
+		const { data: photos, error: photosError } = await supabase
+			.from('plant_photos')
+			.select('id, storage_path')
+			.eq('plant_id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID);
+
+		if (photosError) {
+			return jsonError(c, 'DB_ERROR', 'No se pudieron obtener las fotos para limpieza.', 500, {
+				hint: photosError.message,
+			});
+		}
+
+		// 3. Delete storage objects in batch
+		const storagePaths = (photos ?? []).map((p) => p.storage_path).filter(Boolean);
+		if (storagePaths.length > 0) {
+			const { error: storageError } = await supabase.storage
+				.from(STORAGE_BUCKET)
+				.remove(storagePaths);
+
+			if (storageError) {
+				return jsonError(c, 'STORAGE_ERROR', 'No se pudieron eliminar los archivos de fotos.', 500, {
+					hint: storageError.message,
+				});
+			}
+		}
+
+		// 4. Delete plant_photos rows
+		const { error: deletePhotosError } = await supabase
+			.from('plant_photos')
+			.delete()
+			.eq('plant_id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID);
+
+		if (deletePhotosError) {
+			return jsonError(c, 'DB_ERROR', 'No se pudieron eliminar las fotos.', 500, {
+				hint: deletePhotosError.message,
+			});
+		}
+
+		// 5. Delete care_events rows
+		const { error: deleteEventsError } = await supabase
+			.from('care_events')
+			.delete()
+			.eq('plant_id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID);
+
+		if (deleteEventsError) {
+			return jsonError(c, 'DB_ERROR', 'No se pudieron eliminar los eventos.', 500, {
+				hint: deleteEventsError.message,
+			});
+		}
+
+		// 6. Delete the plant itself
+		const { error: deletePlantError } = await supabase
+			.from('plants')
+			.delete()
+			.eq('id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID);
+
+		if (deletePlantError) {
+			return jsonError(c, 'DB_ERROR', 'No se pudo eliminar la planta.', 500, {
+				hint: deletePlantError.message,
+			});
+		}
+
+		return jsonOk(c, {});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		return jsonError(c, 'DB_ERROR', 'No se pudo eliminar la planta.', 500, {
 			hint: message,
 		});
 	}

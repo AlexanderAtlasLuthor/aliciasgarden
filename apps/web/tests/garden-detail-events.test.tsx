@@ -8,15 +8,25 @@ import * as api from "@/lib/api"
 
 vi.mock("@/lib/api", () => ({
   createPlantEvent: vi.fn(),
+  deletePlant: vi.fn(),
   deletePlantEvent: vi.fn(),
   getPlantById: vi.fn(),
   getPlantEvents: vi.fn(),
   isAPIError: vi.fn(() => false),
+  patchPlant: vi.fn(),
 }))
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({
     plantId: "plant-qa-26",
+  }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
   }),
 }))
 

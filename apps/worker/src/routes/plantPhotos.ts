@@ -218,3 +218,71 @@ plantPhotosRoutes.post('/plants/:id/photos', async (c) => {
     });
   }
 });
+
+plantPhotosRoutes.delete('/photos/:photoId', async (c) => {
+  const photoId = c.req.param('photoId');
+
+  if (!photoId.trim()) {
+    return jsonError(c, 'VALIDATION_ERROR', 'photoId es requerido.', 400);
+  }
+
+  const supabase = getSupabase(c.env);
+
+  // 1. Fetch photo row (ownership check via profile_id)
+  const { data: photo, error: selectError } = await supabase
+    .from('plant_photos')
+    .select('id, plant_id, storage_path')
+    .eq('id', photoId)
+    .eq('profile_id', c.env.PROFILE_ID)
+    .maybeSingle();
+
+  if (selectError) {
+    return jsonError(c, 'DB_ERROR', 'No se pudo buscar la foto.', 500, {
+      hint: selectError.message,
+    });
+  }
+
+  if (!photo) {
+    return jsonError(c, 'NOT_FOUND', 'Foto no encontrada.', 404);
+  }
+
+  // 2. Delete object from storage (idempotent: ignore "not found")
+  const { error: storageError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .remove([photo.storage_path]);
+
+  if (storageError) {
+    return jsonError(c, 'STORAGE_ERROR', 'No se pudo eliminar el archivo de la foto.', 500, {
+      hint: storageError.message,
+    });
+  }
+
+  // 3. Delete row in plant_photos
+  const { error: deleteError } = await supabase
+    .from('plant_photos')
+    .delete()
+    .eq('id', photo.id)
+    .eq('profile_id', c.env.PROFILE_ID);
+
+  if (deleteError) {
+    return jsonError(c, 'DB_ERROR', 'No se pudo eliminar la foto de la base de datos.', 500, {
+      hint: deleteError.message,
+    });
+  }
+
+  // 4. Clear cover_photo_path if this photo was the cover
+  const { error: coverError } = await supabase
+    .from('plants')
+    .update({ cover_photo_path: null })
+    .eq('id', photo.plant_id)
+    .eq('profile_id', c.env.PROFILE_ID)
+    .eq('cover_photo_path', photo.storage_path);
+
+  if (coverError) {
+    return jsonError(c, 'DB_ERROR', 'No se pudo limpiar la portada.', 500, {
+      hint: coverError.message,
+    });
+  }
+
+  return jsonOk(c, {});
+});

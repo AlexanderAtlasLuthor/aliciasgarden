@@ -7,6 +7,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react"
 import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
 import {
+  deletePlantPhoto,
   getPlantById,
   getPlantPhotos,
   isAPIError,
@@ -39,6 +40,8 @@ export default function PlantPhotosPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [coverLoading, setCoverLoading] = useState<string | null>(null)
   const [coverError, setCoverError] = useState<string | null>(null)
+  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [caption, setCaption] = useState("")
@@ -95,6 +98,27 @@ export default function PlantPhotosPage() {
       }
     } finally {
       setCoverLoading(null)
+    }
+  }
+
+  const handleDelete = async (photo: PlantPhoto) => {
+    if (!confirm("¿Eliminar esta foto? Esta accion no se puede deshacer.")) return
+    setDeleteError(null)
+    setDeletingPhotoId(photo.id)
+    try {
+      await deletePlantPhoto(photo.id)
+      if (plant?.cover_photo_path === photo.storage_path) {
+        setPlant((prev) => (prev ? { ...prev, cover_photo_path: null, cover_photo_url: null } : prev))
+      }
+      await loadData()
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        setDeleteError(error.message)
+      } else {
+        setDeleteError("No se pudo eliminar la foto.")
+      }
+    } finally {
+      setDeletingPhotoId(null)
     }
   }
 
@@ -258,7 +282,9 @@ export default function PlantPhotosPage() {
         ) : null}
 
         {!isLoading && !errorMessage && photos.length > 0 ? (
-          <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <>
+            {deleteError ? <p className="text-sm text-red-700">{deleteError}</p> : null}
+            <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {photos.map((photo) => (
               <Card key={photo.id} className="overflow-hidden">
                 <img src={photo.url} alt={photo.caption ?? "Foto de la planta"} className="h-48 w-full object-cover" />
@@ -275,16 +301,26 @@ export default function PlantPhotosPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={!photo.storage_path || coverLoading !== null}
+                      disabled={!photo.storage_path || coverLoading !== null || deletingPhotoId !== null}
                       onClick={() => handleSetCover(photo.storage_path, photo.id)}
                     >
                       {coverLoading === photo.id ? "Guardando..." : "Usar como portada"}
                     </Button>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                    disabled={deletingPhotoId !== null || coverLoading !== null}
+                    onClick={() => handleDelete(photo)}
+                  >
+                    {deletingPhotoId === photo.id ? "Eliminando..." : "Eliminar"}
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </section>
+          </>
         ) : null}
       </div>
     </div>

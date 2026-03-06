@@ -30,6 +30,7 @@ export type Plant = {
   notes: string | null
   cover_photo_path?: string | null
   cover_photo_url?: string | null
+  is_favorite?: boolean
   created_at: string
 }
 
@@ -236,7 +237,7 @@ export async function getPlantById(plantId: string): Promise<Plant> {
 
 export async function patchPlant(
   plantId: string,
-  input: { cover_photo_path?: string | null }
+  input: { nickname?: string; cover_photo_path?: string | null; is_favorite?: boolean }
 ): Promise<Plant> {
   const encodedPlantId = encodeURIComponent(plantId)
   const data = await request<ApiOk<{ plant: Plant }>>(
@@ -365,6 +366,20 @@ export async function uploadPlantPhoto(
   }
 
   return data.photo
+}
+
+export async function deletePlantPhoto(photoId: string): Promise<void> {
+  const encodedPhotoId = encodeURIComponent(photoId)
+  await request<ApiOk<Record<string, never>>>(`/photos/${encodedPhotoId}`, {
+    method: "DELETE"
+  })
+}
+
+export async function deletePlant(plantId: string): Promise<void> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  await request<ApiOk<Record<string, never>>>(`/plants/${encodedPlantId}`, {
+    method: "DELETE"
+  })
 }
 
 export async function getThreads(): Promise<ChatThread[]> {

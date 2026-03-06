@@ -3,7 +3,7 @@ import Link from "next/link"
 import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
 import { getPlants, type Plant } from "@/lib/api"
-import PlantCard from "./PlantCard"
+import GardenClient from "./GardenClient"
 
 export const runtime = "edge"
 
@@ -58,11 +58,7 @@ export default async function GardenPage() {
         ) : null}
 
         {!hasError && plants.length > 0 ? (
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {plants.map((plant) => (
-              <PlantCard key={plant.id} plant={plant} />
-            ))}
-          </section>
+          <GardenClient plants={plants} />
         ) : null}
       </div>
     </div>

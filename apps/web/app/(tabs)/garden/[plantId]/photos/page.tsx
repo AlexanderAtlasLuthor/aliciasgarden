@@ -10,6 +10,7 @@ import {
   getPlantById,
   getPlantPhotos,
   isAPIError,
+  patchPlant,
   uploadPlantPhoto,
   type Plant,
   type PlantPhoto,
@@ -36,6 +37,8 @@ export default function PlantPhotosPage() {
   const [photos, setPhotos] = useState<PlantPhoto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
+  const [coverLoading, setCoverLoading] = useState<string | null>(null)
+  const [coverError, setCoverError] = useState<string | null>(null)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [caption, setCaption] = useState("")
@@ -76,6 +79,24 @@ export default function PlantPhotosPage() {
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  const handleSetCover = async (storagePath: string | null, photoId?: string) => {
+    if (!plantId) return
+    setCoverError(null)
+    setCoverLoading(photoId ?? "__clear__")
+    try {
+      const updated = await patchPlant(plantId, { cover_photo_path: storagePath })
+      setPlant(updated)
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        setCoverError(error.message)
+      } else {
+        setCoverError("No se pudo actualizar la portada.")
+      }
+    } finally {
+      setCoverLoading(null)
+    }
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -143,6 +164,18 @@ export default function PlantPhotosPage() {
             Fotos {plant ? `de ${plant.nickname}` : "de la planta"}
           </h1>
           <p className="text-secondary text-sm">Sube y revisa el historial visual de tu planta.</p>
+          {plant?.cover_photo_path ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-fit"
+              disabled={coverLoading !== null}
+              onClick={() => handleSetCover(null)}
+            >
+              {coverLoading === "__clear__" ? "Quitando..." : "Quitar portada"}
+            </Button>
+          ) : null}
+          {coverError ? <p className="text-sm text-red-700">{coverError}</p> : null}
         </section>
 
         <Card>
@@ -234,6 +267,20 @@ export default function PlantPhotosPage() {
                   <p className="text-secondary text-xs">
                     Capturada: {formatDate(photo.taken_at)} · Subida: {formatDate(photo.created_at)}
                   </p>
+                  {plant?.cover_photo_path === photo.storage_path ? (
+                    <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                      ✅ Portada actual
+                    </span>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!photo.storage_path || coverLoading !== null}
+                      onClick={() => handleSetCover(photo.storage_path, photo.id)}
+                    >
+                      {coverLoading === photo.id ? "Guardando..." : "Usar como portada"}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

@@ -234,6 +234,29 @@ export async function getPlantById(plantId: string): Promise<Plant> {
   return data.plant
 }
 
+export async function patchPlant(
+  plantId: string,
+  input: { cover_photo_path?: string | null }
+): Promise<Plant> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ plant: Plant }>>(
+    `/plants/${encodedPlantId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input)
+    }
+  )
+
+  if (!data.plant) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio la planta actualizada."
+    )
+  }
+
+  return data.plant
+}
+
 export async function getPlantEvents(
   plantId: string,
   limit = 30

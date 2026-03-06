@@ -177,3 +177,49 @@ plantsRoutes.post('/plants', async (c) => {
 		});
 	}
 });
+
+plantsRoutes.patch('/plants/:id', async (c) => {
+	const plantId = c.req.param('id');
+
+	const parsedBody = await safeParseJson(c);
+	const body = asObject(parsedBody);
+
+	if (!body || !('cover_photo_path' in body)) {
+		return jsonError(c, 'VALIDATION_ERROR', 'cover_photo_path es requerido.', 400);
+	}
+
+	const raw = body.cover_photo_path;
+	const coverPhotoPath = raw === null ? null : normalizeOptionalString(raw);
+
+	if (raw !== null && coverPhotoPath === null) {
+		return jsonError(c, 'VALIDATION_ERROR', 'cover_photo_path debe ser un string no vacio o null.', 400);
+	}
+
+	try {
+		const supabase = getSupabase(c.env);
+		const { data: plant, error } = await supabase
+			.from('plants')
+			.update({ cover_photo_path: coverPhotoPath })
+			.eq('id', plantId)
+			.eq('profile_id', c.env.PROFILE_ID)
+			.select('*')
+			.maybeSingle();
+
+		if (error) {
+			return jsonError(c, 'DB_ERROR', 'No se pudo actualizar la planta.', 500, {
+				hint: error.message,
+			});
+		}
+
+		if (!plant) {
+			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
+		}
+
+		return jsonOk(c, { plant });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Unknown error';
+		return jsonError(c, 'DB_ERROR', 'No se pudo actualizar la planta.', 500, {
+			hint: message,
+		});
+	}
+});

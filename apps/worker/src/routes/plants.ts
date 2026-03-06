@@ -126,7 +126,29 @@ plantsRoutes.get('/plants/:id', async (c) => {
 			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
 		}
 
-		return jsonOk(c, { plant });
+		const row = plant as Record<string, unknown>;
+		const coverPath =
+			typeof row.cover_photo_path === 'string' && row.cover_photo_path.length > 0
+				? row.cover_photo_path
+				: null;
+
+		if (!coverPath) {
+			return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+		}
+
+		try {
+			const { data: signed, error: signErr } = await supabase.storage
+				.from(STORAGE_BUCKET)
+				.createSignedUrl(coverPath, SIGNED_URL_EXPIRY_SECONDS);
+
+			if (signErr || !signed?.signedUrl) {
+				return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+			}
+
+			return jsonOk(c, { plant: { ...row, cover_photo_url: signed.signedUrl } });
+		} catch {
+			return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		return jsonError(c, 'DB_ERROR', 'No se pudo obtener la planta.', 500, {
@@ -247,7 +269,29 @@ plantsRoutes.patch('/plants/:id', async (c) => {
 			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
 		}
 
-		return jsonOk(c, { plant });
+		const row = plant as Record<string, unknown>;
+		const coverPath =
+			typeof row.cover_photo_path === 'string' && row.cover_photo_path.length > 0
+				? row.cover_photo_path
+				: null;
+
+		if (!coverPath) {
+			return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+		}
+
+		try {
+			const { data: signed, error: signErr } = await supabase.storage
+				.from(STORAGE_BUCKET)
+				.createSignedUrl(coverPath, SIGNED_URL_EXPIRY_SECONDS);
+
+			if (signErr || !signed?.signedUrl) {
+				return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+			}
+
+			return jsonOk(c, { plant: { ...row, cover_photo_url: signed.signedUrl } });
+		} catch {
+			return jsonOk(c, { plant: { ...row, cover_photo_url: null } });
+		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		return jsonError(c, 'DB_ERROR', 'No se pudo actualizar la planta.', 500, {

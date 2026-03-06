@@ -191,13 +191,15 @@ export default function DashboardHero({
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
   // Shuffle tips once on mount so categories don't cluster together
-  const shuffledTips = useMemo(() => {
+  const [shuffledTips, setShuffledTips] = useState(TONI_DAILY_TIPS)
+
+  useEffect(() => {
     const arr = [...TONI_DAILY_TIPS]
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[arr[i], arr[j]] = [arr[j], arr[i]]
     }
-    return arr
+    setShuffledTips(arr)
   }, [])
 
   useEffect(() => {

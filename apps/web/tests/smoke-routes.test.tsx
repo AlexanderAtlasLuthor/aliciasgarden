@@ -36,7 +36,7 @@ describe("route smoke render", () => {
   it("renders /home", async () => {
     render(<HomePage />)
     expect(screen.getByText("Hablar con Toni")).toBeInTheDocument()
-    expect(await screen.findByText("Mi Jardín")).toBeInTheDocument()
+    expect(await screen.findByText("Favoritas del jardín")).toBeInTheDocument()
   })
 
   it("renders /garden", async () => {

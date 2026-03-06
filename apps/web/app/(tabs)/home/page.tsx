@@ -1,29 +1,21 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
-import Button from "@/components/ui/Button"
-import { Card, CardContent } from "@/components/ui/Card"
-import GlassSurface from "@/components/ui/GlassSurface"
+import ActivityChart from "@/components/dashboard/ActivityChart"
+import DashboardHero from "@/components/dashboard/DashboardHero"
+import DashboardStats from "@/components/dashboard/DashboardStats"
+import GardenHighlights from "@/components/dashboard/GardenHighlights"
+import QuickActions from "@/components/dashboard/QuickActions"
+import RecentActivity from "@/components/dashboard/RecentActivity"
+import WeatherCard from "@/components/dashboard/WeatherCard"
 import MiniTimeline from "@/components/ui/MiniTimeline"
 import { getPlants, type Plant } from "@/lib/api"
-
-const TIP_SLIDESHOW_MS = 10000
-const TONI_DAILY_TIPS = [
-  "Riega temprano: así la planta absorbe mejor y evitas hongos por la noche.",
-  "Mete el dedo 2-3 cm en la tierra: si sigue húmeda, espera antes de volver a regar.",
-  "Limpia las hojas con un paño húmedo una vez por semana para mejorar la fotosíntesis.",
-  "Gira la maceta un cuarto de vuelta cada semana para que crezca pareja hacia la luz.",
-  "Si una hoja amarillea, revisa primero drenaje y exceso de agua antes de abonar.",
-  "Abona en dosis suaves durante crecimiento activo; menos es mejor que pasarte.",
-]
 
 export default function HomePage() {
   const [plants, setPlants] = useState<Plant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
   const loadPlants = async () => {
     setIsLoading(true)
@@ -53,47 +45,29 @@ export default function HomePage() {
     void loadPlants()
   }, [])
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % TONI_DAILY_TIPS.length)
-    }, TIP_SLIDESHOW_MS)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [])
-
-  const previewPlants = plants.slice(0, 3)
   const totalPlants = plants.length
-  const hasMoreThanPreview = plants.length > previewPlants.length
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours()
 
-    if (hour < 12) {
-      return "Buenos dias, Alicia"
-    }
+  const favoritesCount = useMemo(
+    () => plants.filter((p) => p.is_favorite).length,
+    [plants]
+  )
 
-    if (hour < 19) {
-      return "Buenas tardes, Alicia"
-    }
-
-    return "Buenas noches, Alicia"
-  }, [])
-
-  const uniqueLocations = useMemo(
+  const outdoorCount = useMemo(
     () =>
-      new Set(
-        plants
-          .map((plant) => plant.location?.trim())
-          .filter((location): location is string => Boolean(location))
-      ).size,
+      plants.filter((p) => {
+        const loc = p.location?.toLowerCase() ?? ""
+        return loc.includes("exterior") || loc.includes("jardín") || loc.includes("balcón") || loc.includes("terraza") || loc.includes("patio")
+      }).length,
     [plants]
   )
 
-  const latestPlantDisplay = useMemo(
-    () => (plants[0]?.nickname ? `@${plants[0].nickname}` : "—"),
-    [plants]
-  )
+  const riegosEstaSemana = useMemo(() => {
+    if (plants.length === 0) return 0
+    return plants.reduce((sum, p) => {
+      const interval = p.watering_interval_days ?? 7
+      return sum + Math.ceil(7 / interval)
+    }, 0)
+  }, [plants])
 
   const activityValues = useMemo(() => {
     if (plants.length === 0) {
@@ -109,51 +83,53 @@ export default function HomePage() {
   const timelineEvents = useMemo(() => {
     if (plants.length > 0) {
       return [
-        { title: `Añadiste ${plants[0].nickname}`, when: "hace 1h" },
-        { title: "Actualizaste tu jardín", when: "hoy" },
-        { title: "Tip de Toni guardado", when: "ayer" },
+        { title: `Añadiste ${plants[0].nickname}`, when: "hace 1h", kind: "plant" as const },
+        { title: "Regaste tus plantas", when: "hoy", kind: "water" as const },
+        { title: "Foto de progreso guardada", when: "hoy", kind: "photo" as const },
+        { title: "Tip de Toni guardado", when: "ayer", kind: "toni" as const },
       ]
     }
 
     return [
-      { title: "Crea tu primera planta", when: "hoy" },
-      { title: "Habla con Toni", when: "hoy" },
+      { title: "Crea tu primera planta", when: "hoy", kind: "plant" as const },
+      { title: "Habla con Toni", when: "hoy", kind: "toni" as const },
     ]
   }, [plants])
 
-  const plantsKpiValue = isLoading || error ? "—" : totalPlants
-  const locationKpiValue = isLoading || error || uniqueLocations === 0 ? "—" : uniqueLocations
-  const latestKpiValue = isLoading || error ? "—" : latestPlantDisplay
-  const statusKpiValue = error ? "Error" : isLoading ? "—" : totalPlants > 0 ? "Conectado" : "Sin datos"
-  const nextWateringValue = isLoading || error ? "—" : totalPlants === 0 ? "—" : totalPlants % 2 === 0 ? "Hoy" : "2d"
-  const healthValue = isLoading || error ? "—" : "OK"
-  const statusHelper = error ? "Revisa tu conexión" : "Sincronización activa"
+  const dash = isLoading || error ? "—" : null
   const dashboardTiles = [
     {
+      icon: "🌱",
+      label: "Plantas totales",
+      value: dash ?? String(totalPlants),
+      helper: totalPlants === 0 ? "Añade tu primera planta" : "En tu jardín",
+    },
+    {
+      icon: "💧",
+      label: "Riegos esta semana",
+      value: dash ?? String(riegosEstaSemana),
+      helper: riegosEstaSemana === 0 ? "Sin riegos pendientes" : "Estimado semanal",
+    },
+    {
       icon: "🌿",
-      label: "Plantas",
-      value: String(plantsKpiValue),
-      helper: `Próximo riego: ${nextWateringValue}`,
+      label: "Plantas exteriores",
+      value: dash ?? String(outdoorCount),
+      helper: outdoorCount === 0 ? "Ninguna registrada" : "Al aire libre",
     },
     {
-      icon: "📍",
-      label: "Ubicaciones",
-      value: String(locationKpiValue),
-      helper: `Salud: ${healthValue}`,
-    },
-    {
-      icon: "✨",
-      label: "Última añadida",
-      value: String(latestKpiValue),
-      helper: "Esta semana",
-    },
-    {
-      icon: "✅",
-      label: "Estado",
-      value: String(statusKpiValue),
-      helper: statusHelper,
+      icon: "⭐",
+      label: "Favoritas",
+      value: dash ?? String(favoritesCount),
+      helper: favoritesCount === 0 ? "Marca tus favoritas" : "Tus preferidas",
     },
   ]
+
+  const highlightedPlants = useMemo(() => {
+    const favorites = plants.filter((p) => p.is_favorite)
+    const others = plants.filter((p) => !p.is_favorite)
+    return [...favorites, ...others].slice(0, 4)
+  }, [plants])
+
   const weeklyTimeline = useMemo(() => {
     if (plants.length === 0) {
       return [
@@ -178,71 +154,18 @@ export default function HomePage() {
     ]
   }, [plants.length])
 
-  const currentToniTip = TONI_DAILY_TIPS[currentTipIndex]
-
   return (
     <div className="ag-container ag-screen">
       <div className="ag-panel">
-        <section>
-          <GlassSurface variant="strong" className="rounded-3xl p-5 md:p-7">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted">{greeting}</p>
-                  <h1 className="text-primary text-3xl font-semibold tracking-tight">¿Qué haremos hoy?</h1>
-                  <p className="text-secondary mt-1 text-sm">Tu resumen del jardín para hoy.</p>
-                </div>
-                <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
-                  Dashboard
-                </span>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-white/12 bg-white/[0.05] p-4 backdrop-blur-md">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-primary text-sm font-semibold tracking-[0.02em]">Tips diarios de Toni</h2>
-                  <span className="rounded-full border border-white/15 bg-[#2a5a4a] px-2.5 py-1 text-[11px] font-medium text-white/90">
-                    General
-                  </span>
-                </div>
-                <p className="text-secondary text-sm leading-relaxed">{currentToniTip}</p>
-              </div>
-            </div>
-          </GlassSurface>
-        </section>
+        <DashboardHero
+          plantasNecesitanRiego={isLoading || error ? 0 : Math.min(totalPlants, 3)}
+        />
 
         <div className="ag-divider ag-section" />
 
-        <section className="ag-section grid grid-cols-2 gap-3 md:grid-cols-4">
-          {dashboardTiles.map((tile) => {
-            const isLongValueTile = tile.label === "Última añadida"
+        <WeatherCard />
 
-            return (
-              <Card key={tile.label} variant="medium" className="rounded-2xl">
-                <CardContent className="min-w-0 space-y-3 p-4">
-                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a] backdrop-blur-md">
-                    <span className="text-base leading-none">{tile.icon}</span>
-                  </div>
-
-                  <div className="min-w-0 space-y-1">
-                    <p
-                      className={[
-                        "min-w-0 font-semibold tracking-tight text-text-primary",
-                        isLongValueTile
-                          ? "text-ag-h3 leading-tight break-words"
-                          : "text-ag-h2 leading-none",
-                      ].join(" ")}
-                    >
-                      {tile.value}
-                    </p>
-                    <p className="text-ag-h3 text-text-muted">{tile.label}</p>
-                  </div>
-
-                  <p className="ag-truncate text-ag-caption text-text-muted">{tile.helper}</p>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </section>
+        <DashboardStats tiles={dashboardTiles} />
 
         <div className="ag-divider ag-section" />
 
@@ -257,171 +180,19 @@ export default function HomePage() {
             />
           </section>
 
-          <section>
-            <GlassSurface className="space-y-4 p-4" variant="medium">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-primary text-lg font-medium">Acciones rápidas</h2>
-                <p className="text-muted text-xs">Atajos</p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Button
-                  asChild
-                  variant="primary"
-                  size="md"
-                  className="h-12 w-full px-4 py-3 shadow-[0_18px_40px_rgba(88,255,138,0.25)]"
-                >
-                  <Link href="/toni">Hablar con Toni</Link>
-                </Button>
-                <Button asChild variant="ghost" size="md" className="h-12 w-full px-4 py-3">
-                  <Link href="/garden/new">Añadir planta</Link>
-                </Button>
-              </div>
-            </GlassSurface>
-          </section>
+          <QuickActions />
 
-          <section className="space-y-4">
-            <h2 className="text-primary text-lg font-medium">Actividad reciente</h2>
+          <RecentActivity events={timelineEvents} isLoading={isLoading} />
 
-            {isLoading ? (
-              <GlassSurface className="h-28 animate-pulse border-white/15 bg-white/6" variant="strong" />
-            ) : (
-              <GlassSurface className="relative space-y-3 p-4" variant="strong">
-                <div className="pointer-events-none absolute bottom-6 left-5 top-6 w-px bg-white/10" />
-                {timelineEvents.map((event, index) => (
-                  <div key={`${event.title}-${index}`} className="relative pl-7">
-                    <span
-                      className={[
-                        "absolute left-[13px] top-2 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-white/20",
-                        index === 0 ? "bg-emerald-300/70 shadow-[0_0_10px_rgba(120,255,190,0.5)]" : "bg-white/40",
-                      ].join(" ")}
-                      aria-hidden="true"
-                    />
-                    <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2">
-                      <p className="text-sm font-medium text-white/90">{event.title}</p>
-                      <p className="text-xs text-white/60">{event.when}</p>
-                    </div>
-                  </div>
-                ))}
-              </GlassSurface>
-            )}
-          </section>
+          <GardenHighlights
+            plants={highlightedPlants}
+            totalCount={totalPlants}
+            isLoading={isLoading}
+            error={error}
+            onRetry={loadPlants}
+          />
 
-          <section className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-primary text-lg font-medium">Mi Jardín</h2>
-              {hasMoreThanPreview ? (
-                <Link href="/garden" className="text-secondary text-sm transition-colors hover:text-primary">
-                  Ver mi jardín
-                </Link>
-              ) : null}
-            </div>
-
-            {isLoading ? (
-              <div className="space-y-3" aria-busy="true" aria-live="polite">
-                <GlassSurface className="h-24 animate-pulse border-white/15 bg-gradient-to-r from-white/10 to-emerald-200/10" />
-                <GlassSurface className="h-24 animate-pulse border-white/15 bg-gradient-to-r from-white/10 to-cyan-200/10" />
-                <GlassSurface className="h-24 animate-pulse border-white/15 bg-gradient-to-r from-white/10 to-emerald-100/10" />
-              </div>
-            ) : null}
-
-            {!isLoading && error ? (
-              <GlassSurface
-                role="alert"
-                className="space-y-3 rounded-2xl border-red-300/35 bg-red-500/10 p-4 text-red-100"
-                variant="strong"
-              >
-                <p className="text-sm">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void loadPlants()
-                  }}
-                  className="inline-flex items-center justify-center rounded-lg border border-red-200/40 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-100"
-                >
-                  Reintentar
-                </button>
-              </GlassSurface>
-            ) : null}
-
-            {!isLoading && !error && plants.length === 0 ? (
-              <GlassSurface variant="strong" className="rounded-2xl p-5">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="font-medium text-white">🌱 Aún no tienes plantas</p>
-                    <p className="font-medium text-white">Aún no tienes plantas 🌿</p>
-                    <p className="text-sm font-medium text-white">Añade tu primera planta para empezar</p>
-                    <p className="text-sm text-white/70">
-                      Crea tu primera planta para empezar a llevar seguimiento.
-                    </p>
-                  </div>
-                  <Button asChild variant="secondary" size="sm" className="w-fit">
-                    <Link href="/garden/new">Añadir planta</Link>
-                  </Button>
-                </div>
-              </GlassSurface>
-            ) : null}
-
-            {!isLoading && !error && plants.length > 0 ? (
-              <div className="space-y-2">
-                {previewPlants.map((plant) => (
-                  <Card
-                    key={plant.id}
-                    interactive
-                    variant="medium"
-                    className="rounded-xl p-3 transition-all duration-200 hover:translate-y-[-2px] hover:shadow-xl"
-                  >
-                    <CardContent className="p-0">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-sm font-medium text-white/85">
-                          {plant.nickname.slice(0, 1).toUpperCase() || "🌿"}
-                        </div>
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <p className="text-primary truncate font-medium">{plant.nickname}</p>
-                          {(plant.species_common || plant.location) && (
-                            <p className="text-secondary truncate text-sm">
-                              {[plant.species_common, plant.location].filter(Boolean).join(" · ")}
-                            </p>
-                          )}
-                        </div>
-                        <span aria-hidden="true" className="text-muted text-lg">
-                          ›
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : null}
-          </section>
-
-          <section>
-            <GlassSurface className="space-y-4 p-4" variant="strong">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-base font-semibold text-white">Actividad</p>
-                  <p className="text-xs text-white/60">Últimos 7 días</p>
-                </div>
-                <p className="text-sm font-semibold text-white/85">+12%</p>
-              </div>
-              {isLoading ? (
-                <div className="h-20 animate-pulse rounded-xl border border-white/10 bg-white/5" />
-              ) : (
-                <div className="flex h-24 items-end gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  {activityValues.map((value, index) => (
-                    <div
-                      key={`bar-${index}`}
-                      className={[
-                        "w-full rounded-t-sm border border-white/10 transition-all",
-                        index === activityValues.length - 1 ? "bg-white/22" : "bg-white/14",
-                      ].join(" ")}
-                      style={{ height: `${value}%` }}
-                      aria-hidden="true"
-                    />
-                  ))}
-                </div>
-              )}
-            </GlassSurface>
-          </section>
+          <ActivityChart values={activityValues} isLoading={isLoading} />
         </div>
       </div>
     </div>

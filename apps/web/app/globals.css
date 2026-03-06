@@ -346,3 +346,66 @@ body::before {
 	width: 100%;
 	background: rgba(255, 255, 255, 0.08);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Weather ambient overlays                                           */
+/* ------------------------------------------------------------------ */
+
+/* Sunny — warm pulsing glow */
+.weather-ambient-sunny {
+	background: radial-gradient(
+		ellipse 120% 80% at 80% 20%,
+		rgba(251, 191, 36, 0.18),
+		transparent 70%
+	);
+	animation: weather-glow 6s ease-in-out infinite alternate;
+}
+
+@keyframes weather-glow {
+	0% {
+		opacity: 0.6;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+/* Cloudy — slow drifting fog layer */
+.weather-ambient-cloudy {
+	background:
+		radial-gradient(ellipse 100% 60% at 30% 50%, rgba(148, 163, 184, 0.1), transparent 70%),
+		radial-gradient(ellipse 100% 60% at 75% 40%, rgba(148, 163, 184, 0.08), transparent 70%);
+	animation: weather-drift 14s ease-in-out infinite alternate;
+}
+
+@keyframes weather-drift {
+	0% {
+		transform: translateX(-4%);
+		opacity: 0.7;
+	}
+	100% {
+		transform: translateX(4%);
+		opacity: 1;
+	}
+}
+
+/* Rain — diagonal streak overlay */
+.weather-ambient-rain {
+	background: repeating-linear-gradient(
+		105deg,
+		transparent,
+		transparent 14px,
+		rgba(147, 197, 253, 0.04) 14px,
+		rgba(147, 197, 253, 0.04) 15px
+	);
+	animation: weather-rain 4s linear infinite;
+}
+
+@keyframes weather-rain {
+	0% {
+		background-position: 0 0;
+	}
+	100% {
+		background-position: -30px 60px;
+	}
+}

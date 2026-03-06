@@ -9,12 +9,15 @@ type HeaderProps = {
   title: string
 }
 
-const DRAWER_LINKS = [
-  { label: "Inicio", href: "/home" },
-  { label: "Toni", href: "/toni" },
-  { label: "Jardín", href: "/garden" },
-  { label: "Plan", href: "/plan" },
-  { label: "Ajustes", href: "/settings" }
+const MAIN_LINKS = [
+  { label: "Inicio", href: "/home", icon: "🏠" },
+  { label: "Jardín", href: "/garden", icon: "🌿" },
+  { label: "Toni", href: "/toni", icon: "🤖" },
+]
+
+const SECONDARY_LINKS = [
+  { label: "Plan", href: "/plan", icon: "📅" },
+  { label: "Ajustes", href: "/settings", icon: "⚙️" },
 ]
 
 export default function Header({ title }: HeaderProps) {
@@ -89,40 +92,97 @@ export default function Header({ title }: HeaderProps) {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="relative h-full w-[82vw] max-w-[20rem] border-r border-white/18 bg-[rgba(12,34,27,0.88)] px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)] shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+            className="relative flex h-full w-[82vw] max-w-[20rem] flex-col border-r border-white/18 bg-[rgba(12,34,27,0.88)] pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)] shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
           >
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-primary text-sm font-semibold tracking-[0.03em]">Navegación</p>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pb-4">
+              <p className="text-sm font-semibold tracking-[0.03em] text-white/90">
+                Navegación
+              </p>
               <button
                 type="button"
                 aria-label="Cerrar"
                 onClick={() => setIsDrawerOpen(false)}
-                className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs text-white/60 transition hover:bg-white/10 active:scale-95"
               >
-                Cerrar
+                ✕
               </button>
             </div>
+            <div className="mx-5 h-px bg-white/[0.08]" />
 
-            <nav className="space-y-2">
-              {DRAWER_LINKS.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            {/* Nav sections */}
+            <nav className="flex-1 overflow-y-auto px-3 pt-5">
+              {/* Main */}
+              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+                Principal
+              </p>
+              <ul className="space-y-0.5">
+                {MAIN_LINKS.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`)
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsDrawerOpen(false)}
+                        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${
+                          isActive
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/[0.06] hover:text-white/90"
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-emerald-400/80" />
+                        )}
+                        <span className="text-base">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsDrawerOpen(false)}
-                    className={`block rounded-2xl border px-4 py-3 text-sm transition ${
-                      isActive
-                        ? "border-white/35 bg-white/12 text-white"
-                        : "border-white/12 bg-white/5 text-white/85 hover:bg-white/10"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              })}
+              {/* Secondary */}
+              <p className="mb-1.5 mt-6 px-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+                Más
+              </p>
+              <ul className="space-y-0.5">
+                {SECONDARY_LINKS.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`)
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsDrawerOpen(false)}
+                        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${
+                          isActive
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/[0.06] hover:text-white/90"
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-emerald-400/80" />
+                        )}
+                        <span className="text-base">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
             </nav>
+
+            {/* Footer / Profile */}
+            <div className="mx-5 h-px bg-white/[0.08]" />
+            <div className="flex items-center gap-3 px-5 pt-4">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-sm">
+                🌿
+              </span>
+              <span className="text-sm font-medium text-white/65">Alicia</span>
+            </div>
           </aside>
         </div>
       ) : null}

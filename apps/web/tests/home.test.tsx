@@ -40,12 +40,13 @@ describe("home page", () => {
     expect(await screen.findByText("Aún no tienes plantas 🌿")).toBeInTheDocument()
   })
 
-  it("shows preview with up to 3 plants", async () => {
+  it("shows up to 4 highlighted plants and CTA when more exist", async () => {
     mockedGetPlants.mockResolvedValue([
       makePlant("1", "Poto"),
       makePlant("2", "Aloe"),
       makePlant("3", "Ficus"),
-      makePlant("4", "Helecho")
+      makePlant("4", "Helecho"),
+      makePlant("5", "Cactus")
     ])
 
     render(<HomePage />)
@@ -53,8 +54,9 @@ describe("home page", () => {
     expect(await screen.findByText("Poto")).toBeInTheDocument()
     expect(screen.getByText("Aloe")).toBeInTheDocument()
     expect(screen.getByText("Ficus")).toBeInTheDocument()
-    expect(screen.queryByText("Helecho")).not.toBeInTheDocument()
-    expect(screen.getByText("Ver mi jardín")).toBeInTheDocument()
+    expect(screen.getByText("Helecho")).toBeInTheDocument()
+    expect(screen.queryByText("Cactus")).not.toBeInTheDocument()
+    expect(screen.getByText("Ver todo mi jardín →")).toBeInTheDocument()
   })
 
   it("shows error and retries loading", async () => {

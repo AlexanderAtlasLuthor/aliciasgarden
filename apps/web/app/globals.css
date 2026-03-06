@@ -312,19 +312,33 @@ body::before {
 
 @media (min-width: 768px) {
 	.ag-container {
-		max-width: 42rem;
+		max-width: 96%;
 	}
 }
 
 @media (min-width: 1024px) {
 	.ag-container {
-		max-width: 48rem;
+		max-width: 97%;
+		padding: 0 1rem;
+	}
+}
+
+@media (min-width: 1280px) {
+	.ag-container {
+		max-width: 98%;
+		padding: 0 1.25rem;
 	}
 }
 
 .ag-screen {
 	padding-top: 1rem;
 	padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+	.ag-screen {
+		padding-bottom: 2rem;
+	}
 }
 
 .ag-panel {

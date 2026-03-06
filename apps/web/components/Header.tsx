@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { TABS } from "@/lib/nav"
+
 type HeaderProps = {
   title: string
 }
@@ -55,10 +57,16 @@ export default function Header({ title }: HeaderProps) {
     }
   }, [isDrawerOpen])
 
+  const isLinkActive = (href: string): boolean => {
+    if (href === "/home") return pathname === href
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
     <header className="relative z-40 pt-[max(env(safe-area-inset-top),0.5rem)]">
       <div className="ag-container">
-        <div className="relative flex items-center justify-center rounded-[24px] border border-white/28 bg-[#153b2f] px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
+        {/* Mobile / tablet header */}
+        <div className="relative flex items-center justify-center rounded-[24px] border border-white/28 bg-[#153b2f] px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)] lg:hidden">
           <button
             type="button"
             aria-label="Abrir menú"
@@ -76,6 +84,37 @@ export default function Header({ title }: HeaderProps) {
           </div>
 
           <span className="absolute right-2 h-12 w-12 md:hidden" aria-hidden="true" />
+        </div>
+
+        {/* Desktop header with horizontal nav */}
+        <div className="hidden lg:flex items-center justify-between rounded-[24px] border border-white/28 bg-[#153b2f] px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a]">
+              <Image src="/ag-logo-white.png" alt="AG" width={28} height={28} priority unoptimized />
+            </div>
+            <span className="text-sm font-semibold tracking-[0.02em] text-white/90">
+              Alicia&apos;s Garden
+            </span>
+          </div>
+
+          <nav className="flex items-center gap-1">
+            {TABS.map((tab) => {
+              const active = isLinkActive(tab.href)
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={`relative rounded-full px-4 py-1.5 text-[0.84rem] font-medium tracking-wide transition-all duration-200 ${
+                    active
+                      ? "bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                      : "text-white/60 hover:bg-white/6 hover:text-white/90"
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
       </div>
 

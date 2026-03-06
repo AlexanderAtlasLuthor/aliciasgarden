@@ -190,9 +190,19 @@ export default function DashboardHero({
 }: DashboardHeroProps) {
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
 
+  // Shuffle tips once on mount so categories don't cluster together
+  const shuffledTips = useMemo(() => {
+    const arr = [...TONI_DAILY_TIPS]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }, [])
+
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % TONI_DAILY_TIPS.length)
+      setCurrentTipIndex((prevIndex) => (prevIndex + 1) % shuffledTips.length)
     }, TIP_SLIDESHOW_MS)
 
     return () => {
@@ -214,7 +224,7 @@ export default function DashboardHero({
     return "Buenas noches, Alicia"
   }, [])
 
-  const currentTip = TONI_DAILY_TIPS[currentTipIndex]
+  const currentTip = shuffledTips[currentTipIndex]
 
   const statusIndicators = [
     { icon: "💧", label: "Necesitan riego", value: `${plantasNecesitanRiego} plantas` },

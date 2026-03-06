@@ -3,6 +3,7 @@ import Link from "next/link"
 import Button from "@/components/ui/Button"
 import { Card, CardContent } from "@/components/ui/Card"
 import { getPlants, type Plant } from "@/lib/api"
+import PlantCard from "./PlantCard"
 
 export const runtime = "edge"
 
@@ -57,38 +58,9 @@ export default async function GardenPage() {
         ) : null}
 
         {!hasError && plants.length > 0 ? (
-          <section className="space-y-2">
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {plants.map((plant) => (
-              <Link
-                key={plant.id}
-                href={`/garden/${plant.id}`}
-                className="block cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60"
-                aria-label={`Ver ficha de ${plant.nickname}`}
-              >
-                <Card
-                  interactive
-                  className="rounded-xl p-3 transition-all duration-200 hover:translate-y-[-2px] hover:shadow-xl"
-                >
-                  <CardContent className="p-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-sm font-medium">
-                        {plant.nickname.slice(0, 1).toUpperCase() || "🌿"}
-                      </div>
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <p className="text-primary truncate font-medium">{plant.nickname}</p>
-                        {(plant.species_common || plant.location) && (
-                          <p className="text-secondary truncate text-sm">
-                            {[plant.species_common, plant.location].filter(Boolean).join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                      <span aria-hidden="true" className="text-muted text-lg">
-                        ›
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <PlantCard key={plant.id} plant={plant} />
             ))}
           </section>
         ) : null}

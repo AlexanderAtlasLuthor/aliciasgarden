@@ -340,7 +340,7 @@ export default function PlantDetailPage() {
         </section>
 
         <Card className="rounded-xl p-4" variant="strong">
-          <CardContent className="space-y-3 p-0">
+          <CardContent className="space-y-4 p-0">
             <h2 className="text-primary text-lg font-semibold">Resumen</h2>
             <p className="text-secondary text-sm">
               <span className="text-primary font-medium">Ubicacion:</span>{" "}
@@ -358,7 +358,7 @@ export default function PlantDetailPage() {
           </CardContent>
         </Card>
 
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <MetricTile
             icon="💧"
             label="Ultimo riego"
@@ -393,9 +393,9 @@ export default function PlantDetailPage() {
         </section>
 
         <Card className="rounded-xl p-4" variant="medium">
-          <CardContent className="space-y-3 p-0">
+          <CardContent className="space-y-5 p-0">
             <h2 className="text-primary text-lg font-semibold">Acciones rapidas</h2>
-            <div className="space-y-3 rounded-[var(--radius-3)] border border-white/10 bg-white/5 p-3">
+            <div className="space-y-5 rounded-[var(--radius-3)] border border-white/10 bg-white/5 p-4">
               <h3 className="text-primary text-sm font-medium">Registrar evento</h3>
               <div className="flex flex-wrap gap-2">
                 {EVENT_TYPE_OPTIONS.map((option) => {
@@ -417,7 +417,7 @@ export default function PlantDetailPage() {
                 })}
               </div>
 
-              <label className="space-y-1">
+              <label className="block space-y-1.5">
                 <span className="text-secondary text-xs">
                   {selectedEventType === "note" ? "Texto de la nota (opcional)" : "Notas (opcional)"}
                 </span>
@@ -426,7 +426,7 @@ export default function PlantDetailPage() {
                   value={eventText}
                   onChange={(event) => setEventText(event.target.value)}
                   placeholder={selectedEventType === "note" ? "Ej. Hoja nueva en el brote" : "Ej. Humedad estable"}
-                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/45"
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/45"
                   disabled={isRegisteringEvent}
                 />
               </label>
@@ -446,7 +446,7 @@ export default function PlantDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button variant="secondary" disabled>
                 Añadir nota
               </Button>

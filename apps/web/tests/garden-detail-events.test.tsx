@@ -34,6 +34,7 @@ const makePlant = (): Plant => ({
   light: "Indirecta",
   watering_interval_days: 7,
   notes: null,
+  cover_photo_url: null,
   created_at: "2026-03-05T00:00:00.000Z",
 })
 

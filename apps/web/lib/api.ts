@@ -29,6 +29,7 @@ export type Plant = {
   watering_interval_days: number | null
   notes: string | null
   cover_photo_path?: string | null
+  cover_photo_url?: string | null
   created_at: string
 }
 

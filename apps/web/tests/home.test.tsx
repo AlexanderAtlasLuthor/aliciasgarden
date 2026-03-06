@@ -21,6 +21,7 @@ const makePlant = (id: string, nickname: string): Plant => ({
   light: null,
   watering_interval_days: 7,
   notes: null,
+  cover_photo_url: null,
   created_at: new Date().toISOString()
 })
 

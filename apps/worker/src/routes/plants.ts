@@ -46,6 +46,9 @@ function normalizeOptionalNumber(value: unknown): number | null {
 	return value;
 }
 
+const STORAGE_BUCKET = 'plant-photos';
+const SIGNED_URL_EXPIRY_SECONDS = 3600;
+
 export const plantsRoutes = new Hono<{ Bindings: Env }>();
 
 plantsRoutes.get('/plants', async (c) => {
@@ -63,7 +66,36 @@ plantsRoutes.get('/plants', async (c) => {
 			});
 		}
 
-		return jsonOk(c, { plants: plants ?? [] }, 200);
+		const rows = (plants ?? []) as Record<string, unknown>[];
+
+		const enriched = await Promise.all(
+			rows.map(async (plant) => {
+				const coverPath =
+					typeof plant.cover_photo_path === 'string' && plant.cover_photo_path.length > 0
+						? plant.cover_photo_path
+						: null;
+
+				if (!coverPath) {
+					return { ...plant, cover_photo_url: null };
+				}
+
+				try {
+					const { data: signed, error: signErr } = await supabase.storage
+						.from(STORAGE_BUCKET)
+						.createSignedUrl(coverPath, SIGNED_URL_EXPIRY_SECONDS);
+
+					if (signErr || !signed?.signedUrl) {
+						return { ...plant, cover_photo_url: null };
+					}
+
+					return { ...plant, cover_photo_url: signed.signedUrl };
+				} catch {
+					return { ...plant, cover_photo_url: null };
+				}
+			}),
+		);
+
+		return jsonOk(c, { plants: enriched, cover_photo_url_ttl_seconds: SIGNED_URL_EXPIRY_SECONDS }, 200);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		return jsonError(c, 'DB_ERROR', 'No se pudo obtener las plantas.', 500, {

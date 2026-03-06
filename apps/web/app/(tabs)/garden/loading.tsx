@@ -10,16 +10,12 @@ export default function GardenLoading() {
 
       <div className="h-11 w-full animate-pulse rounded-[var(--radius-3)] border border-white/10 bg-white/8" />
 
-      <section className="space-y-3">
-        <GlassSurface className="p-4" variant="strong">
-          <div className="h-24 animate-pulse rounded-[var(--radius-3)] border border-white/10 bg-white/8" />
-        </GlassSurface>
-        <GlassSurface className="p-4" variant="strong">
-          <div className="h-24 animate-pulse rounded-[var(--radius-3)] border border-white/10 bg-white/8" />
-        </GlassSurface>
-        <GlassSurface className="p-4" variant="strong">
-          <div className="h-24 animate-pulse rounded-[var(--radius-3)] border border-white/10 bg-white/8" />
-        </GlassSurface>
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <GlassSurface key={i} className="aspect-[3/4] overflow-hidden rounded-2xl p-0" variant="strong">
+            <div className="h-full w-full animate-pulse rounded-2xl border border-white/10 bg-white/8" />
+          </GlassSurface>
+        ))}
       </section>
     </div>
   )

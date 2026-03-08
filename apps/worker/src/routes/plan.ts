@@ -19,6 +19,15 @@ type DbErrorLike = {
   message?: string;
 };
 
+type CareEventType = 'water' | 'pest' | 'note';
+
+const CARE_EVENT_TYPE_BY_TASK_KIND: Record<string, CareEventType | undefined> = {
+  watering: 'water',
+  pest_check: 'pest',
+  diagnosis_follow_up: 'note',
+  light_rotation: 'note',
+};
+
 function asObject(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -309,9 +318,44 @@ planRoutes.post('/plan/tasks/:taskId/complete', async (c) => {
       completed_at: completedAt,
     };
 
-    const updatedTasks = tasks.map((task) => (task.task_id === taskId ? updatedTask : task));
+    const mappedEventType = CARE_EVENT_TYPE_BY_TASK_KIND[existingTask.kind];
+    const shouldCreateCareEvent = !!existingTask.plant_id && !!mappedEventType;
 
     const supabase = getSupabase(c.env);
+
+    if (shouldCreateCareEvent) {
+      const payload = {
+        profile_id: profileId,
+        plant_id: existingTask.plant_id,
+        type: mappedEventType,
+        event_at: completedAt,
+        details: {
+          source: 'weekly_plan',
+          task_id: existingTask.task_id,
+          task_kind: existingTask.kind,
+          title: existingTask.title,
+          reason: existingTask.reason,
+        },
+      };
+
+      const { error: eventInsertError } = await supabase
+        .from('care_events')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (eventInsertError) {
+        console.error('Failed to create care_event from weekly plan task completion.', {
+          profile_id: profileId,
+          task_id: existingTask.task_id,
+          task_kind: existingTask.kind,
+          plant_id: existingTask.plant_id,
+          error: eventInsertError.message,
+        });
+      }
+    }
+
+    const updatedTasks = tasks.map((task) => (task.task_id === taskId ? updatedTask : task));
     const { error: updateError } = await supabase
       .from('weekly_plans')
       .update({

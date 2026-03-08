@@ -122,7 +122,8 @@ export type WeeklyPlanTask = {
   reason: string
   due_date: string
   priority: "low" | "medium" | "high"
-  status: "pending"
+  status: "pending" | "completed"
+  completed_at?: string | null
 }
 
 export type GenerateWeeklyPlanInput = {
@@ -572,6 +573,60 @@ export async function generateWeeklyPlan(
     method: "POST",
     body: JSON.stringify(input)
   })
+
+  if (!data.week_start || typeof data.week_start !== "string") {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el inicio de semana del plan."
+    )
+  }
+
+  if (!Array.isArray(data.tasks)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las tareas del plan semanal."
+    )
+  }
+
+  return {
+    week_start: data.week_start,
+    tasks: data.tasks
+  }
+}
+
+export async function getWeeklyPlan(): Promise<WeeklyPlanResponse> {
+  const data = await request<ApiOk<WeeklyPlanResponse>>("/plan")
+
+  if (!data.week_start || typeof data.week_start !== "string") {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el inicio de semana del plan."
+    )
+  }
+
+  if (!Array.isArray(data.tasks)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las tareas del plan semanal."
+    )
+  }
+
+  return {
+    week_start: data.week_start,
+    tasks: data.tasks
+  }
+}
+
+export async function completeWeeklyPlanTask(
+  taskId: string
+): Promise<WeeklyPlanResponse> {
+  const encodedTaskId = encodeURIComponent(taskId)
+  const data = await request<ApiOk<WeeklyPlanResponse>>(
+    `/plan/tasks/${encodedTaskId}/complete`,
+    {
+      method: "POST"
+    }
+  )
 
   if (!data.week_start || typeof data.week_start !== "string") {
     throw createAPIError(

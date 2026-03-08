@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react"
 
-import { generateWeeklyPlan, type WeeklyPlanTask } from "@/lib/api"
-
-const DEFAULT_PROFILE_ID = "default_profile"
+import {
+  completeWeeklyPlanTask,
+  getWeeklyPlan,
+  type WeeklyPlanTask,
+} from "@/lib/api"
 
 function formatWeekStartLabel(weekStart: string | null): string {
   if (!weekStart) {
@@ -79,29 +81,45 @@ export default function PlanPage() {
   const [tasks, setTasks] = useState<WeeklyPlanTask[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null)
+
+  const getErrorMessage = (loadError: unknown, fallbackMessage: string): string => {
+    if (loadError && typeof loadError === "object" && "message" in loadError) {
+      const message = (loadError as { message?: unknown }).message
+      if (typeof message === "string" && message.trim()) {
+        return message
+      }
+    }
+
+    return fallbackMessage
+  }
 
   const loadPlan = async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const plan = await generateWeeklyPlan({ profile_id: DEFAULT_PROFILE_ID })
+      const plan = await getWeeklyPlan()
       setWeekStart(plan.week_start)
       setTasks(Array.isArray(plan.tasks) ? plan.tasks : [])
     } catch (loadError: unknown) {
-      const fallbackMessage = "No pudimos cargar tu plan semanal. Intenta de nuevo."
-
-      if (loadError && typeof loadError === "object" && "message" in loadError) {
-        const message = (loadError as { message?: unknown }).message
-        if (typeof message === "string" && message.trim()) {
-          setError(message)
-          return
-        }
-      }
-
-      setError(fallbackMessage)
+      setError(getErrorMessage(loadError, "No pudimos cargar tu plan semanal. Intenta de nuevo."))
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const onCompleteTask = async (taskId: string) => {
+    setCompletingTaskId(taskId)
+
+    try {
+      const plan = await completeWeeklyPlanTask(taskId)
+      setWeekStart(plan.week_start)
+      setTasks(Array.isArray(plan.tasks) ? plan.tasks : [])
+    } catch {
+      // Keep checklist state as-is if the completion request fails.
+    } finally {
+      setCompletingTaskId((current) => (current === taskId ? null : current))
     }
   }
 
@@ -136,7 +154,7 @@ export default function PlanPage() {
       }))
   }, [tasks])
 
-  const hasData = !isLoading && !error && tasks.length > 0
+  const hasData = !isLoading && tasks.length > 0
 
   return (
     <div className="ag-container ag-screen">
@@ -192,7 +210,7 @@ export default function PlanPage() {
           </div>
         ) : null}
 
-        {!isLoading && error ? (
+        {!isLoading && error && tasks.length === 0 ? (
           <div className="rounded-[var(--radius-3)] border border-red-300/25 bg-[linear-gradient(180deg,rgba(255,90,90,0.15),rgba(255,90,90,0.08))] px-4 py-4">
             <p className="text-primary font-medium">No pudimos cargar tu plan</p>
             <p className="text-secondary mt-1 text-sm">{error}</p>
@@ -229,10 +247,22 @@ export default function PlanPage() {
                   {group.tasks.map((task) => (
                     <li
                       key={task.task_id}
-                      className="rounded-[var(--radius-2)] border border-white/10 bg-black/10 px-3 py-3 transition-colors hover:bg-black/15"
+                      className={`rounded-[var(--radius-2)] border px-3 py-3 transition-colors ${
+                        task.status === "completed"
+                          ? "border-emerald-300/25 bg-emerald-300/10"
+                          : "border-white/10 bg-black/10 hover:bg-black/15"
+                      }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-primary text-sm font-medium">{task.title}</p>
+                        <p
+                          className={`text-sm font-medium ${
+                            task.status === "completed"
+                              ? "text-secondary line-through decoration-white/30"
+                              : "text-primary"
+                          }`}
+                        >
+                          {task.title}
+                        </p>
                         <div className="flex items-center gap-2">
                           <span className="text-secondary text-[11px]">{formatDueDate(task.due_date)}</span>
                           <span
@@ -240,9 +270,28 @@ export default function PlanPage() {
                           >
                             {priorityLabel(task.priority)}
                           </span>
+                          {task.status === "completed" ? (
+                            <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2 py-0.5 text-[11px] font-medium text-emerald-100">
+                              Hecho
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <p className="text-secondary mt-1 text-sm">{task.reason}</p>
+                      {task.status === "pending" ? (
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-70"
+                            onClick={() => {
+                              void onCompleteTask(task.task_id)
+                            }}
+                            disabled={completingTaskId === task.task_id}
+                          >
+                            {completingTaskId === task.task_id ? "Guardando..." : "Marcar como hecho"}
+                          </button>
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

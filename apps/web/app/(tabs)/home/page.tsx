@@ -32,7 +32,7 @@ function toMph(windSpeedKmh: number): number {
 
 export default function HomePage() {
   const [plants, setPlants] = useState<Plant[]>([])
-  const [weather, setWeather] = useState<WeatherResponse>(WEATHER_FALLBACK)
+  const [weather, setWeather] = useState<WeatherResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -207,29 +207,36 @@ export default function HomePage() {
     ]
   }, [plants.length])
 
-  const roundedTemperature = Math.round(weather.temperature_f)
-  const roundedWindSpeedMph = toMph(weather.wind_speed)
+  const effectiveWeather = weather ?? WEATHER_FALLBACK
+  const roundedTemperature = Math.round(effectiveWeather.temperature_f)
+  const roundedWindSpeedMph = toMph(effectiveWeather.wind_speed)
 
   return (
     <div className="ag-container ag-screen">
       <div className="ag-panel">
         <DashboardHero
           plantasNecesitanRiego={isLoading || error ? 0 : Math.min(totalPlants, 3)}
-          probabilidadLluvia={weather.rain_probability}
+          probabilidadLluvia={effectiveWeather.rain_probability}
           temperatura={roundedTemperature}
         />
 
         <div className="ag-divider ag-section" />
 
-        <WeatherCard
-          temperature={roundedTemperature}
-          rain_probability={weather.rain_probability}
-          wind_speed={roundedWindSpeedMph}
-          humidity={Math.round(weather.humidity)}
-          condition={weather.condition}
-          condition_label={weather.condition_label}
-          current_time={weather.current_time}
-        />
+        {weather ? (
+          <WeatherCard
+            temperature={roundedTemperature}
+            rain_probability={effectiveWeather.rain_probability}
+            wind_speed={roundedWindSpeedMph}
+            humidity={Math.round(effectiveWeather.humidity)}
+            condition={effectiveWeather.condition}
+            condition_label={effectiveWeather.condition_label}
+            current_time={effectiveWeather.current_time}
+          />
+        ) : (
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] px-5 py-6 text-sm text-white/55 backdrop-blur-md">
+            Cargando clima...
+          </div>
+        )}
 
         <DashboardStats tiles={dashboardTiles} />
 

@@ -248,7 +248,7 @@ export default function DashboardHero({
 
   return (
     <section>
-      <GlassSurface variant="strong" className="rounded-3xl p-5 md:p-7">
+      <GlassSurface variant="strong" className="ag-emerald-plate rounded-3xl p-5 md:p-7">
         <div className="space-y-5">
           {/* Header */}
           <div className="space-y-1.5">

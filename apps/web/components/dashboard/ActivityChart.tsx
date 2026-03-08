@@ -12,7 +12,7 @@ export default function ActivityChart({ values, isLoading }: ActivityChartProps)
 
   return (
     <section>
-      <GlassSurface className="space-y-4 p-4 md:p-5" variant="strong">
+      <GlassSurface className="ag-emerald-plate space-y-4 p-4 md:p-5" variant="strong">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-base font-semibold text-white">Actividad semanal</p>

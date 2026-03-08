@@ -25,7 +25,7 @@ export default function MetricTile({
   const isLongValue = String(value).length > 12
 
   return (
-    <Card variant="medium" className="rounded-2xl">
+    <Card variant="medium" className="ag-emerald-plate rounded-2xl">
       <div className="min-w-0 space-y-3 p-4">
         {icon ? (
           <div

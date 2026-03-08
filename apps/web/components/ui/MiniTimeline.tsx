@@ -36,7 +36,7 @@ export default function MiniTimeline({
   ctaHref,
 }: MiniTimelineProps) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/12 bg-white/6 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_0%,rgba(46,240,155,0.12),transparent_55%)] before:content-['']">
+    <section className="ag-emerald-plate relative overflow-hidden rounded-2xl border border-white/12 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_20%_0%,rgba(46,240,155,0.12),transparent_55%)] before:content-['']">
       <div className="relative space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>

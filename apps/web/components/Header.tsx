@@ -66,18 +66,18 @@ export default function Header({ title }: HeaderProps) {
     <header className="relative z-40 pt-[max(env(safe-area-inset-top),0.5rem)]">
       <div className="ag-container">
         {/* Mobile / tablet header */}
-        <div className="relative flex items-center justify-center rounded-[24px] border border-white/28 bg-[#153b2f] px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)] lg:hidden">
+        <div className="ag-emerald-plate relative flex items-center justify-center rounded-[24px] border border-white/28 px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)] lg:hidden">
           <button
             type="button"
             aria-label="Abrir menú"
             onClick={() => setIsDrawerOpen(true)}
-            className="absolute left-2 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/90 transition hover:bg-white/10 active:scale-[0.98] md:hidden"
+            className="ag-emerald-plate absolute left-2 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white/90 transition active:scale-[0.98] md:hidden"
           >
             <span className="text-2xl leading-none">☰</span>
           </button>
 
           <div className="flex min-w-0 flex-col items-center justify-center gap-1">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a]">
+            <div className="ag-emerald-plate flex h-16 w-16 items-center justify-center rounded-full border border-white/35">
               <Image src="/ag-logo-white.png" alt="AG" width={42} height={42} priority unoptimized />
             </div>
             <span className="text-primary text-xs font-medium tracking-[0.02em] md:hidden">{title}</span>
@@ -87,9 +87,9 @@ export default function Header({ title }: HeaderProps) {
         </div>
 
         {/* Desktop header with horizontal nav */}
-        <div className="hidden lg:flex items-center justify-between rounded-[24px] border border-white/28 bg-[#153b2f] px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
+        <div className="ag-emerald-plate hidden lg:flex items-center justify-between rounded-[24px] border border-white/28 px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/35 bg-[#2a5a4a]">
+            <div className="ag-emerald-plate flex h-10 w-10 items-center justify-center rounded-full border border-white/35">
               <Image src="/ag-logo-white.png" alt="AG" width={28} height={28} priority unoptimized />
             </div>
             <span className="text-sm font-semibold tracking-[0.02em] text-white/90">
@@ -106,7 +106,7 @@ export default function Header({ title }: HeaderProps) {
                   href={tab.href}
                   className={`relative rounded-full px-4 py-1.5 text-[0.84rem] font-medium tracking-wide transition-all duration-200 ${
                     active
-                      ? "bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                      ? "ag-emerald-plate text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
                       : "text-white/60 hover:bg-white/6 hover:text-white/90"
                   }`}
                 >
@@ -131,7 +131,7 @@ export default function Header({ title }: HeaderProps) {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="relative flex h-full w-[82vw] max-w-[20rem] flex-col border-r border-white/18 bg-[rgba(12,34,27,0.88)] pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)] shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+            className="ag-emerald-plate relative flex h-full w-[82vw] max-w-[20rem] flex-col border-r border-white/18 pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)] shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pb-4">
@@ -142,7 +142,7 @@ export default function Header({ title }: HeaderProps) {
                 type="button"
                 aria-label="Cerrar"
                 onClick={() => setIsDrawerOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs text-white/60 transition hover:bg-white/10 active:scale-95"
+                className="ag-emerald-plate flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-xs text-white/60 transition active:scale-95"
               >
                 ✕
               </button>
@@ -167,7 +167,7 @@ export default function Header({ title }: HeaderProps) {
                         onClick={() => setIsDrawerOpen(false)}
                         className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${
                           isActive
-                            ? "bg-white/10 text-white"
+                            ? "ag-emerald-plate text-white"
                             : "text-white/70 hover:bg-white/[0.06] hover:text-white/90"
                         }`}
                       >
@@ -198,7 +198,7 @@ export default function Header({ title }: HeaderProps) {
                         onClick={() => setIsDrawerOpen(false)}
                         className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${
                           isActive
-                            ? "bg-white/10 text-white"
+                            ? "ag-emerald-plate text-white"
                             : "text-white/70 hover:bg-white/[0.06] hover:text-white/90"
                         }`}
                       >
@@ -217,7 +217,7 @@ export default function Header({ title }: HeaderProps) {
             {/* Footer / Profile */}
             <div className="mx-5 h-px bg-white/[0.08]" />
             <div className="flex items-center gap-3 px-5 pt-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-sm">
+              <span className="ag-emerald-plate flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-sm">
                 🌿
               </span>
               <span className="text-sm font-medium text-white/65">Alicia</span>

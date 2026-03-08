@@ -27,9 +27,9 @@ export default function RecentActivity({ events, isLoading }: RecentActivityProp
       <h2 className="text-primary text-base font-semibold">Actividad reciente</h2>
 
       {isLoading ? (
-        <GlassSurface className="h-28 animate-pulse border-white/15 bg-white/6" variant="strong" />
+        <GlassSurface className="ag-emerald-plate h-28 animate-pulse border-white/15" variant="strong" />
       ) : (
-        <GlassSurface className="divide-y divide-white/[0.06] p-3" variant="strong">
+        <GlassSurface className="ag-emerald-plate divide-y divide-white/[0.06] p-3" variant="strong">
           {events.map((event, index) => {
             const icon = EVENT_ICON[event.kind ?? "edit"]
             return (

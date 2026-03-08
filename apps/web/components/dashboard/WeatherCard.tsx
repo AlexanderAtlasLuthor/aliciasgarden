@@ -233,16 +233,8 @@ function parseOpenMeteoLocalTime(dateLike?: string | null): ClockParts | null {
   return { year, month, day, hour24, minute }
 }
 
-function getEtClockParts(dateLike?: string | null): ClockParts {
-  const openMeteoLocal = parseOpenMeteoLocalTime(dateLike)
-  if (openMeteoLocal) {
-    return openMeteoLocal
-  }
-
+function getEtPartsFromDate(date: Date): ClockParts {
   const timeZone = "America/New_York"
-  const parsedSource = dateLike ? new Date(dateLike) : null
-  const baseDate = parsedSource && !Number.isNaN(parsedSource.getTime()) ? parsedSource : new Date()
-
   const parts = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "2-digit",
@@ -251,7 +243,7 @@ function getEtClockParts(dateLike?: string | null): ClockParts {
     minute: "2-digit",
     hour12: false,
     timeZone,
-  }).formatToParts(baseDate)
+  }).formatToParts(date)
 
   const asNumber = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((part) => part.type === type)?.value ?? "0")
@@ -263,6 +255,45 @@ function getEtClockParts(dateLike?: string | null): ClockParts {
     hour24: asNumber("hour"),
     minute: asNumber("minute"),
   }
+}
+
+function minutesSinceMidnight(parts: ClockParts): number {
+  return parts.hour24 * 60 + parts.minute
+}
+
+function circularMinuteDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b)
+  return Math.min(diff, 1440 - diff)
+}
+
+function resolveAmbiguousEtClockParts(raw: ClockParts): ClockParts {
+  const nowEt = getEtPartsFromDate(new Date())
+
+  const parsedAsUtc = getEtPartsFromDate(
+    new Date(Date.UTC(raw.year, raw.month - 1, raw.day, raw.hour24, raw.minute))
+  )
+
+  const rawDistance = circularMinuteDistance(
+    minutesSinceMidnight(raw),
+    minutesSinceMidnight(nowEt)
+  )
+  const utcDistance = circularMinuteDistance(
+    minutesSinceMidnight(parsedAsUtc),
+    minutesSinceMidnight(nowEt)
+  )
+
+  return utcDistance + 10 < rawDistance ? parsedAsUtc : raw
+}
+
+function getEtClockParts(dateLike?: string | null): ClockParts {
+  const openMeteoLocal = parseOpenMeteoLocalTime(dateLike)
+  if (openMeteoLocal) {
+    return resolveAmbiguousEtClockParts(openMeteoLocal)
+  }
+
+  const parsedSource = dateLike ? new Date(dateLike) : null
+  const baseDate = parsedSource && !Number.isNaN(parsedSource.getTime()) ? parsedSource : new Date()
+  return getEtPartsFromDate(baseDate)
 }
 
 function getEtHour(dateLike?: string | null): number {

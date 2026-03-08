@@ -70,6 +70,19 @@ export type CareEvent = {
   created_at: string
 }
 
+export type WeatherResponse = {
+  temperature_c: number
+  temperature_f: number
+  rain_probability: number
+  wind_speed: number
+  humidity: number
+  weather_code: number
+  is_day: 0 | 1
+  condition: "sunny" | "clear-night" | "cloudy" | "rain"
+  condition_label: string
+  current_time?: string | null
+}
+
 function getBaseUrl(): string {
   if (!BASE_URL) {
     throw {
@@ -429,4 +442,8 @@ export async function sendPlantChatMessage(
     thread_id: data.thread_id,
     message: data.message
   }
+}
+
+export async function getWeather(): Promise<WeatherResponse> {
+  return request("/weather")
 }

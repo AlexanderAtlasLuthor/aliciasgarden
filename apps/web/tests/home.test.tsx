@@ -7,10 +7,12 @@ import type { Plant } from "@/lib/api"
 import * as api from "@/lib/api"
 
 vi.mock("@/lib/api", () => ({
-  getPlants: vi.fn()
+  getPlants: vi.fn(),
+  getWeather: vi.fn()
 }))
 
 const mockedGetPlants = vi.mocked(api.getPlants)
+const mockedGetWeather = vi.mocked(api.getWeather)
 
 const makePlant = (id: string, nickname: string): Plant => ({
   id,
@@ -28,6 +30,19 @@ const makePlant = (id: string, nickname: string): Plant => ({
 describe("home page", () => {
   beforeEach(() => {
     mockedGetPlants.mockReset()
+    mockedGetWeather.mockReset()
+    mockedGetWeather.mockResolvedValue({
+      temperature_c: 22,
+      temperature_f: 72,
+      rain_probability: 20,
+      wind_speed: 5,
+      humidity: 55,
+      weather_code: 1,
+      is_day: 1,
+      condition: "sunny",
+      condition_label: "Soleado",
+      current_time: null
+    })
   })
 
   it("shows core CTAs and empty state", async () => {

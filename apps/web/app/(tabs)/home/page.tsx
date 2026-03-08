@@ -10,10 +10,29 @@ import QuickActions from "@/components/dashboard/QuickActions"
 import RecentActivity from "@/components/dashboard/RecentActivity"
 import WeatherCard from "@/components/dashboard/WeatherCard"
 import MiniTimeline from "@/components/ui/MiniTimeline"
-import { getPlants, type Plant } from "@/lib/api"
+import { getPlants, getWeather, type Plant, type WeatherResponse } from "@/lib/api"
+
+const WEATHER_FALLBACK: WeatherResponse = {
+  temperature_c: 22,
+  temperature_f: 72,
+  rain_probability: 20,
+  wind_speed: 5,
+  humidity: 55,
+  weather_code: 1,
+  is_day: 1,
+  condition: "sunny",
+  condition_label: "Soleado",
+  current_time: null,
+}
+const WEATHER_REFRESH_MS = 60 * 60 * 1000
+
+function toMph(windSpeedKmh: number): number {
+  return Math.round(windSpeedKmh * 0.621371)
+}
 
 export default function HomePage() {
   const [plants, setPlants] = useState<Plant[]>([])
+  const [weather, setWeather] = useState<WeatherResponse>(WEATHER_FALLBACK)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,8 +41,20 @@ export default function HomePage() {
     setError(null)
 
     try {
-      const plantList = await getPlants()
+      const weatherPromise =
+        typeof getWeather === "function"
+          ? Promise.resolve(getWeather())
+              .then((data) => data ?? WEATHER_FALLBACK)
+              .catch(() => WEATHER_FALLBACK)
+          : Promise.resolve(WEATHER_FALLBACK)
+
+      const [plantList, weatherData] = await Promise.all([
+        getPlants(),
+        weatherPromise,
+      ])
+
       setPlants(plantList)
+      setWeather(weatherData)
     } catch (fetchError: unknown) {
       const fallbackMessage = "No pudimos cargar tu jardin. Intenta de nuevo."
 
@@ -43,6 +74,28 @@ export default function HomePage() {
 
   useEffect(() => {
     void loadPlants()
+  }, [])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (typeof getWeather !== "function") {
+        return
+      }
+
+      void Promise.resolve(getWeather())
+        .then((latestWeather) => {
+          if (latestWeather) {
+            setWeather(latestWeather)
+          }
+        })
+        .catch(() => {
+          // Keep the last valid value when refresh fails.
+        })
+    }, WEATHER_REFRESH_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
   }, [])
 
   const totalPlants = plants.length
@@ -154,16 +207,29 @@ export default function HomePage() {
     ]
   }, [plants.length])
 
+  const roundedTemperature = Math.round(weather.temperature_f)
+  const roundedWindSpeedMph = toMph(weather.wind_speed)
+
   return (
     <div className="ag-container ag-screen">
       <div className="ag-panel">
         <DashboardHero
           plantasNecesitanRiego={isLoading || error ? 0 : Math.min(totalPlants, 3)}
+          probabilidadLluvia={weather.rain_probability}
+          temperatura={roundedTemperature}
         />
 
         <div className="ag-divider ag-section" />
 
-        <WeatherCard />
+        <WeatherCard
+          temperature={roundedTemperature}
+          rain_probability={weather.rain_probability}
+          wind_speed={roundedWindSpeedMph}
+          humidity={Math.round(weather.humidity)}
+          condition={weather.condition}
+          condition_label={weather.condition_label}
+          current_time={weather.current_time}
+        />
 
         <DashboardStats tiles={dashboardTiles} />
 

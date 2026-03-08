@@ -185,7 +185,7 @@ export interface DashboardHeroProps {
 export default function DashboardHero({
   plantasNecesitanRiego = 3,
   probabilidadLluvia = 20,
-  temperatura = 24,
+  temperatura = 72,
   resumen = "Tu jardín se ve bien. Unas plantas necesitan atención hoy.",
 }: DashboardHeroProps) {
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
@@ -243,7 +243,7 @@ export default function DashboardHero({
   const statusIndicators = [
     { icon: "💧", label: "Necesitan riego", value: `${plantasNecesitanRiego} plantas` },
     { icon: "🌧️", label: "Prob. lluvia", value: `${probabilidadLluvia}%` },
-    { icon: "🌡️", label: "Temperatura", value: `${temperatura}°C` },
+    { icon: "🌡️", label: "Temperatura", value: `${temperatura}°F` },
   ]
 
   return (

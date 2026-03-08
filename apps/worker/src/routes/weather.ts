@@ -10,10 +10,13 @@ type OpenMeteoResponse = {
     time?: string;
     temperature_2m?: number;
     relative_humidity_2m?: number;
-    precipitation_probability?: number;
     weather_code?: number;
     wind_speed_10m?: number;
     is_day?: number;
+  };
+  hourly?: {
+    time?: string[];
+    precipitation_probability?: number[];
   };
 };
 
@@ -86,11 +89,35 @@ function toFahrenheit(temperatureC: number): number {
   return (temperatureC * 9) / 5 + 32;
 }
 
+function resolveRainProbability(data: OpenMeteoResponse, currentTime: string | undefined): number | null {
+  const probabilities = data.hourly?.precipitation_probability;
+  if (!Array.isArray(probabilities) || probabilities.length === 0) {
+    return null;
+  }
+
+  if (!currentTime) {
+    const first = probabilities[0];
+    return isFiniteNumber(first) ? first : null;
+  }
+
+  const hourlyTimes = data.hourly?.time;
+  if (Array.isArray(hourlyTimes)) {
+    const index = hourlyTimes.indexOf(currentTime);
+    if (index >= 0 && index < probabilities.length) {
+      const candidate = probabilities[index];
+      return isFiniteNumber(candidate) ? candidate : null;
+    }
+  }
+
+  const first = probabilities[0];
+  return isFiniteNumber(first) ? first : null;
+}
+
 export const weatherRoutes = new Hono<{ Bindings: Env }>();
 
 weatherRoutes.get('/weather', async (c) => {
   const url =
-    'https://api.open-meteo.com/v1/forecast?latitude=32.2177&longitude=-82.4135&current=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,is_day';
+    'https://api.open-meteo.com/v1/forecast?latitude=32.2177&longitude=-82.4135&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&hourly=precipitation_probability';
 
   let response: Response;
 
@@ -123,7 +150,7 @@ weatherRoutes.get('/weather', async (c) => {
   const weatherCode = data.current?.weather_code;
   const isDay = data.current?.is_day;
   const currentTime = data.current?.time;
-  const rainProbability = data.current?.precipitation_probability;
+  const rainProbability = resolveRainProbability(data, currentTime);
 
   if (
     !isFiniteNumber(temperatureC) ||

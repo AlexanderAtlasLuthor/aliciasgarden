@@ -40,13 +40,16 @@ describe('GET /weather', () => {
       new Response(
         JSON.stringify({
           current: {
+            time: '2026-03-07T10:00',
             temperature_2m: 23,
             relative_humidity_2m: 62,
-            precipitation_probability: 40,
             wind_speed_10m: 10,
             weather_code: 3,
             is_day: 1,
-            time: '2026-03-07T10:00',
+          },
+          hourly: {
+            time: ['2026-03-07T09:00', '2026-03-07T10:00'],
+            precipitation_probability: [35, 40],
           },
         }),
         {
@@ -82,13 +85,16 @@ describe('GET /weather', () => {
       new Response(
         JSON.stringify({
           current: {
+            time: '2026-03-07T23:00',
             temperature_2m: 19,
             relative_humidity_2m: 50,
-            precipitation_probability: 8,
             wind_speed_10m: 6,
             weather_code: 1,
             is_day: 0,
-            time: '2026-03-07T23:00',
+          },
+          hourly: {
+            time: ['2026-03-07T23:00'],
+            precipitation_probability: [8],
           },
         }),
         {

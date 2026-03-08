@@ -59,16 +59,21 @@ type WeatherCardProps = {
   current_time?: string | null
 }
 
-function formatLiveDate(currentTime?: string | null): string {
-  const parsed = currentTime ? new Date(currentTime) : new Date()
-  const baseDate = Number.isNaN(parsed.getTime()) ? new Date() : parsed
-  const formatted = new Intl.DateTimeFormat("es-ES", {
+function formatLiveDate(): string {
+  const baseDate = new Date()
+  const formattedDate = new Intl.DateTimeFormat("es-ES", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "America/New_York",
+  }).format(baseDate)
+  const formattedTime = new Intl.DateTimeFormat("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/New_York",
   }).format(baseDate)
 
-  return `Hoy, ${formatted}`
+  return `Hoy, ${formattedDate} · ${formattedTime} ET`
 }
 
 export default function WeatherCard({
@@ -78,10 +83,9 @@ export default function WeatherCard({
   humidity,
   condition,
   condition_label,
-  current_time,
 }: WeatherCardProps) {
   const theme = WEATHER_THEMES[condition]
-  const liveDateLabel = formatLiveDate(current_time)
+  const liveDateLabel = formatLiveDate()
 
   return (
     <section>

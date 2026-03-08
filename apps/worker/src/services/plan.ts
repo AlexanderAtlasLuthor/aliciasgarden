@@ -42,7 +42,8 @@ export type WeeklyPlanTask = {
   reason: string;
   due_date: string;
   priority: WeeklyPlanTaskPriority;
-  status: 'pending';
+  status: 'pending' | 'completed';
+  completed_at?: string | null;
 };
 
 export type WeeklyPlanResult = {

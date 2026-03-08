@@ -16,7 +16,8 @@ type WeeklyPlanTask = {
   reason: string;
   due_date: string;
   priority: 'low' | 'medium' | 'high';
-  status: 'pending';
+  status: 'pending' | 'completed';
+  completed_at?: string | null;
 };
 
 type WeeklyPlanResult = {
@@ -141,6 +142,8 @@ const getSupabaseMock = vi.fn(() => ({
               eq: (secondColumn: string, secondValue: unknown) => {
                 filters[secondColumn] = secondValue;
                 return {
+                  data: supabaseState.updateData,
+                  error: supabaseState.updateError,
                   select: () => ({
                     maybeSingle: async () => {
                       supabaseState.updateFilters.push({ ...filters });
@@ -469,5 +472,203 @@ describe('plan routes - subfase 5.2', () => {
 
     expect(supabaseState.insertPayloads).toHaveLength(1);
     expect(supabaseState.updatePayloads).toHaveLength(1);
+  });
+});
+
+describe('plan routes - subfase 5.3', () => {
+  it('POST /plan/tasks/:taskId/complete returns 404 PLAN_NOT_FOUND when weekly plan does not exist', async () => {
+    supabaseState.selectResults = [{ data: null, error: null }];
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/task-404/complete',
+      { method: 'POST' },
+      testEnv as Required<TestEnv>,
+    );
+    const body = (await response.json()) as unknown;
+
+    expect(response.status).toBe(404);
+    expect(getErrorCode(body)).toBe('PLAN_NOT_FOUND');
+    expect(supabaseState.updatePayloads).toHaveLength(0);
+  });
+
+  it('POST /plan/tasks/:taskId/complete returns 404 TASK_NOT_FOUND when task is missing in tasks_json', async () => {
+    supabaseState.selectResults = [
+      {
+        data: {
+          week_start: generatedPlan.week_start,
+          tasks_json: [
+            {
+              task_id: 'existing-task',
+              plant_id: 'plant-1',
+              plant_name: 'Monstera',
+              kind: 'watering',
+              title: 'Regar Monstera',
+              reason: 'Pendiente.',
+              due_date: '2026-03-03',
+              priority: 'medium',
+              status: 'pending',
+            },
+          ],
+        },
+        error: null,
+      },
+    ];
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/missing-task/complete',
+      { method: 'POST' },
+      testEnv as Required<TestEnv>,
+    );
+    const body = (await response.json()) as unknown;
+
+    expect(response.status).toBe(404);
+    expect(getErrorCode(body)).toBe('TASK_NOT_FOUND');
+    expect(supabaseState.updatePayloads).toHaveLength(0);
+  });
+
+  it('POST /plan/tasks/:taskId/complete completes pending task, preserves order, and persists tasks_json', async () => {
+    const originalTasks: WeeklyPlanTask[] = [
+      {
+        task_id: 'task-1',
+        plant_id: 'plant-1',
+        plant_name: 'Monstera',
+        kind: 'watering',
+        title: 'Regar Monstera',
+        reason: 'Han pasado 7 dias.',
+        due_date: '2026-03-03',
+        priority: 'high',
+        status: 'pending',
+      },
+      {
+        task_id: 'task-2',
+        plant_id: 'plant-2',
+        plant_name: 'Poto',
+        kind: 'growth_measurement',
+        title: 'Medir Poto',
+        reason: 'No hay medicion reciente.',
+        due_date: '2026-03-04',
+        priority: 'low',
+        status: 'pending',
+      },
+    ];
+
+    supabaseState.selectResults = [
+      {
+        data: {
+          week_start: generatedPlan.week_start,
+          tasks_json: originalTasks,
+        },
+        error: null,
+      },
+    ];
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/task-1/complete',
+      { method: 'POST' },
+      testEnv as Required<TestEnv>,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      week_start: generatedPlan.week_start,
+    });
+
+    expect(Object.prototype.hasOwnProperty.call(body, 'week_start')).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(body, 'tasks')).toBe(true);
+
+    const responseTasks = body.tasks as WeeklyPlanTask[];
+    expect(Array.isArray(responseTasks)).toBe(true);
+    expect(responseTasks).toHaveLength(2);
+
+    expect(responseTasks[0].task_id).toBe('task-1');
+    expect(responseTasks[1].task_id).toBe('task-2');
+
+    expect(responseTasks[0].status).toBe('completed');
+    expect(typeof responseTasks[0].completed_at).toBe('string');
+    expect(Number.isNaN(Date.parse(String(responseTasks[0].completed_at)))).toBe(false);
+
+    expect(responseTasks[1]).toEqual(originalTasks[1]);
+
+    expect(supabaseState.updatePayloads).toHaveLength(1);
+    const updatePayload = supabaseState.updatePayloads[0] as {
+      tasks_json?: WeeklyPlanTask[];
+      updated_at?: string;
+    };
+
+    expect(updatePayload.tasks_json).toBeDefined();
+    expect(updatePayload.tasks_json).toHaveLength(2);
+    expect(updatePayload.tasks_json?.[0].task_id).toBe('task-1');
+    expect(updatePayload.tasks_json?.[1].task_id).toBe('task-2');
+    expect(updatePayload.tasks_json?.[0].status).toBe('completed');
+    expect(typeof updatePayload.tasks_json?.[0].completed_at).toBe('string');
+    expect(updatePayload.tasks_json?.[1]).toEqual(originalTasks[1]);
+
+    expect(typeof updatePayload.updated_at).toBe('string');
+    expect(Number.isNaN(Date.parse(String(updatePayload.updated_at)))).toBe(false);
+  });
+
+  it('POST /plan/tasks/:taskId/complete is idempotent when task is already completed', async () => {
+    const alreadyCompletedAt = '2026-03-03T10:20:30.000Z';
+    const tasks: WeeklyPlanTask[] = [
+      {
+        task_id: 'task-1',
+        plant_id: 'plant-1',
+        plant_name: 'Monstera',
+        kind: 'watering',
+        title: 'Regar Monstera',
+        reason: 'Ya completada.',
+        due_date: '2026-03-03',
+        priority: 'medium',
+        status: 'completed',
+        completed_at: alreadyCompletedAt,
+      },
+      {
+        task_id: 'task-2',
+        plant_id: 'plant-2',
+        plant_name: 'Poto',
+        kind: 'growth_measurement',
+        title: 'Medir Poto',
+        reason: 'Sigue pendiente.',
+        due_date: '2026-03-04',
+        priority: 'low',
+        status: 'pending',
+      },
+    ];
+
+    supabaseState.selectResults = [
+      {
+        data: {
+          week_start: generatedPlan.week_start,
+          tasks_json: tasks,
+        },
+        error: null,
+      },
+    ];
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/task-1/complete',
+      { method: 'POST' },
+      testEnv as Required<TestEnv>,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      week_start: generatedPlan.week_start,
+      tasks,
+    });
+
+    expect(supabaseState.updatePayloads).toHaveLength(0);
   });
 });

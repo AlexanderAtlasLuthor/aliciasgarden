@@ -257,4 +257,86 @@ planRoutes.post('/plan/generate', async (c) => {
   }
 });
 
+planRoutes.post('/plan/tasks/:taskId/complete', async (c) => {
+  const profileId = asRequiredTrimmedString(c.env.PROFILE_ID);
+
+  if (!profileId) {
+    return jsonError(c, 'VALIDATION_ERROR', 'PROFILE_ID es requerido.', 500);
+  }
+
+  const taskId = asRequiredTrimmedString(c.req.param('taskId'));
+  if (!taskId) {
+    return jsonError(c, 'VALIDATION_ERROR', 'taskId es requerido.', 400);
+  }
+
+  const weekStart = getCurrentWeekStart();
+
+  try {
+    const { row: storedPlan, error: storedPlanError } = await getStoredWeeklyPlan(
+      profileId,
+      weekStart,
+      c.env,
+    );
+
+    if (storedPlanError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo leer el plan semanal.', 500, {
+        hint: storedPlanError.message ?? 'Unknown database error',
+      });
+    }
+
+    if (!storedPlan) {
+      return jsonError(c, 'PLAN_NOT_FOUND', 'No existe plan semanal para la semana actual.', 404);
+    }
+
+    const tasks = toTasks(storedPlan.tasks_json);
+    const existingTask = tasks.find((task) => task.task_id === taskId);
+
+    if (!existingTask) {
+      return jsonError(c, 'TASK_NOT_FOUND', 'No existe la tarea solicitada en el plan actual.', 404);
+    }
+
+    if (existingTask.status === 'completed') {
+      return jsonOk(c, {
+        week_start: storedPlan.week_start,
+        tasks,
+      });
+    }
+
+    const completedAt = new Date().toISOString();
+    const updatedTask: WeeklyPlanTask = {
+      ...existingTask,
+      status: 'completed',
+      completed_at: completedAt,
+    };
+
+    const updatedTasks = tasks.map((task) => (task.task_id === taskId ? updatedTask : task));
+
+    const supabase = getSupabase(c.env);
+    const { error: updateError } = await supabase
+      .from('weekly_plans')
+      .update({
+        tasks_json: updatedTasks,
+        updated_at: completedAt,
+      })
+      .eq('profile_id', profileId)
+      .eq('week_start', weekStart);
+
+    if (updateError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo actualizar el plan semanal.', 500, {
+        hint: updateError.message,
+      });
+    }
+
+    return jsonOk(c, {
+      week_start: weekStart,
+      tasks: updatedTasks,
+    });
+  } catch (error) {
+    const messageText = error instanceof Error ? error.message : 'Unknown error';
+    return jsonError(c, 'DB_ERROR', 'No se pudo completar la tarea del plan semanal.', 500, {
+      hint: messageText,
+    });
+  }
+});
+
 export default planRoutes;

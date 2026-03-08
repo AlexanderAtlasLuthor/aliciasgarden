@@ -186,18 +186,87 @@ type WeatherCardProps = {
   current_time?: string | null
 }
 
-function getEtHour(dateLike?: string | null): number {
+const MONTH_NAMES_ES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+]
+
+type ClockParts = {
+  year: number
+  month: number
+  day: number
+  hour24: number
+  minute: number
+}
+
+function parseOpenMeteoLocalTime(dateLike?: string | null): ClockParts | null {
+  if (!dateLike) {
+    return null
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(dateLike)
+  if (!match) {
+    return null
+  }
+
+  const [year, month, day, hour24, minute] = match.slice(1).map(Number)
+  if (
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    Number.isNaN(hour24) ||
+    Number.isNaN(minute)
+  ) {
+    return null
+  }
+
+  return { year, month, day, hour24, minute }
+}
+
+function getEtClockParts(dateLike?: string | null): ClockParts {
+  const openMeteoLocal = parseOpenMeteoLocalTime(dateLike)
+  if (openMeteoLocal) {
+    return openMeteoLocal
+  }
+
   const timeZone = "America/New_York"
   const parsedSource = dateLike ? new Date(dateLike) : null
   const baseDate = parsedSource && !Number.isNaN(parsedSource.getTime()) ? parsedSource : new Date()
 
-  return Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      hour12: false,
-      timeZone,
-    }).format(baseDate)
-  )
+  const parts = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone,
+  }).formatToParts(baseDate)
+
+  const asNumber = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0")
+
+  return {
+    year: asNumber("year"),
+    month: asNumber("month"),
+    day: asNumber("day"),
+    hour24: asNumber("hour"),
+    minute: asNumber("minute"),
+  }
+}
+
+function getEtHour(dateLike?: string | null): number {
+  return getEtClockParts(dateLike).hour24
 }
 
 function getDaySegment(hour24: number): DaySegment {
@@ -217,24 +286,13 @@ function getDaySegment(hour24: number): DaySegment {
 }
 
 function formatLiveDate(dateLike?: string | null): string {
-  const timeZone = "America/New_York"
-  const parsedSource = dateLike ? new Date(dateLike) : null
-  const baseDate = parsedSource && !Number.isNaN(parsedSource.getTime()) ? parsedSource : new Date()
+  const { year, month, day, hour24, minute } = getEtClockParts(dateLike)
 
-  const hour24 = getEtHour(dateLike)
-
-  const formattedDate = new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone,
-  }).format(baseDate)
-  const formattedTime = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone,
-  }).format(baseDate)
+  const monthName = MONTH_NAMES_ES[Math.min(Math.max(month - 1, 0), 11)]
+  const formattedDate = `${day} de ${monthName} de ${year}`
+  const hour12 = hour24 % 12 || 12
+  const period = hour24 < 12 ? "AM" : "PM"
+  const formattedTime = `${hour12}:${String(minute).padStart(2, "0")} ${period}`
 
   const contextualPrefix =
     hour24 < 5 ? "Madrugada del" : hour24 >= 19 ? "Esta noche," : "Hoy,"

@@ -77,9 +77,13 @@ export default function Header({ title }: HeaderProps) {
           </button>
 
           <div className="flex min-w-0 flex-col items-center justify-center gap-1">
-            <div className="ag-emerald-plate flex h-16 w-16 items-center justify-center rounded-full border border-white/35">
+            <Link
+              href="/home"
+              aria-label="Ir al dashboard"
+              className="ag-emerald-plate flex h-16 w-16 items-center justify-center rounded-full border border-white/35 transition hover:brightness-110"
+            >
               <Image src="/ag-logo-white.png" alt="AG" width={42} height={42} priority unoptimized />
-            </div>
+            </Link>
             <span className="text-primary text-xs font-medium tracking-[0.02em] md:hidden">{title}</span>
           </div>
 
@@ -89,9 +93,13 @@ export default function Header({ title }: HeaderProps) {
         {/* Desktop header with horizontal nav */}
         <div className="ag-emerald-plate hidden lg:flex items-center justify-between rounded-[24px] border border-white/28 px-5 py-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.45)]">
           <div className="flex items-center gap-3">
-            <div className="ag-emerald-plate flex h-10 w-10 items-center justify-center rounded-full border border-white/35">
+            <Link
+              href="/home"
+              aria-label="Ir al dashboard"
+              className="ag-emerald-plate flex h-10 w-10 items-center justify-center rounded-full border border-white/35 transition hover:brightness-110"
+            >
               <Image src="/ag-logo-white.png" alt="AG" width={28} height={28} priority unoptimized />
-            </div>
+            </Link>
             <span className="text-sm font-semibold tracking-[0.02em] text-white/90">
               Alicia&apos;s Garden
             </span>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
 import GlassSurface from "@/components/ui/GlassSurface"
 
@@ -189,6 +189,7 @@ export default function DashboardHero({
   resumen = "Tu jardín se ve bien. Unas plantas necesitan atención hoy.",
 }: DashboardHeroProps) {
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
+  const [greeting, setGreeting] = useState("Hola, Alicia")
 
   // Shuffle tips once on mount so categories don't cluster together
   const [shuffledTips, setShuffledTips] = useState(TONI_DAILY_TIPS)
@@ -212,18 +213,20 @@ export default function DashboardHero({
     }
   }, [])
 
-  const greeting = useMemo(() => {
+  useEffect(() => {
     const hour = new Date().getHours()
 
     if (hour < 12) {
-      return "Buenos días, Alicia"
+      setGreeting("Buenos días, Alicia")
+      return
     }
 
     if (hour < 19) {
-      return "Buenas tardes, Alicia"
+      setGreeting("Buenas tardes, Alicia")
+      return
     }
 
-    return "Buenas noches, Alicia"
+    setGreeting("Buenas noches, Alicia")
   }, [])
 
   const currentTip = shuffledTips[currentTipIndex]

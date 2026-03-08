@@ -5,7 +5,7 @@ export default function TabsLoading() {
   return (
     <div className="space-y-6" aria-busy="true" aria-live="polite">
       <div className="flex justify-center">
-        <Image src="/AG Logo.png" alt="Alicia's Garden" width={56} height={56} priority />
+        <Image src="/AG Logo.png" alt="Alicia's Garden" width={56} height={56} priority unoptimized />
       </div>
 
       <section className="space-y-2">

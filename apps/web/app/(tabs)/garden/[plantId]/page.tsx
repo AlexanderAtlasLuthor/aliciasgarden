@@ -624,6 +624,9 @@ export default function PlantDetailPage() {
                 <Link href={`/garden/${plant.id}/photos`}>Subir foto</Link>
               </Button>
               <Button asChild variant="secondary">
+                <Link href={`/garden/${plant.id}/diagnose`}>Diagnostico por foto</Link>
+              </Button>
+              <Button asChild variant="secondary">
                 <Link href={`/garden/${plant.id}/toni`}>Preguntar a Toni</Link>
               </Button>
             </div>

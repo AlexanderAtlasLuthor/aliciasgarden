@@ -83,6 +83,18 @@ export type WeatherResponse = {
   current_time?: string | null
 }
 
+export type DiagnosePlantPhotoInput = {
+  plant_id: string
+  photo_url: string
+}
+
+export type DiagnosePlantPhotoResponse = {
+  diagnosis_id: string
+  possible_causes: string[]
+  action_plan: string[]
+  confirmation_questions: string[]
+}
+
 function getBaseUrl(): string {
   if (!BASE_URL) {
     throw {
@@ -446,4 +458,29 @@ export async function sendPlantChatMessage(
 
 export async function getWeather(): Promise<WeatherResponse> {
   return request("/weather")
+}
+
+export async function diagnosePlantPhoto(
+  input: DiagnosePlantPhotoInput
+): Promise<DiagnosePlantPhotoResponse> {
+  const data = await request<ApiOk<DiagnosePlantPhotoResponse>>("/diagnose", {
+    method: "POST",
+    body: JSON.stringify(input)
+  })
+
+  if (!data.diagnosis_id || typeof data.diagnosis_id !== "string") {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el identificador del diagnostico."
+    )
+  }
+
+  return {
+    diagnosis_id: data.diagnosis_id,
+    possible_causes: Array.isArray(data.possible_causes) ? data.possible_causes : [],
+    action_plan: Array.isArray(data.action_plan) ? data.action_plan : [],
+    confirmation_questions: Array.isArray(data.confirmation_questions)
+      ? data.confirmation_questions
+      : []
+  }
 }

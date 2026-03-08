@@ -4,6 +4,7 @@ import { cors } from './middleware/cors';
 import { errors } from './middleware/errors';
 import { rateLimit } from './middleware/rateLimit';
 import { chatRoutes } from './routes/chat';
+import { diagnoseRoutes } from './routes/diagnose';
 import { healthRoutes } from './routes/health';
 import { plantEventsRoutes } from './routes/plantEvents';
 import { plantPhotosRoutes } from './routes/plantPhotos';
@@ -27,5 +28,6 @@ app.route('/', plantEventsRoutes);
 app.route('/', plantPhotosRoutes);
 app.route('/', chatRoutes);
 app.route('/', weatherRoutes);
+app.route('/', diagnoseRoutes);
 
 export default app;

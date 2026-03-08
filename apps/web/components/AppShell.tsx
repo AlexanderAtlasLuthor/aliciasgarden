@@ -1,4 +1,5 @@
 import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 import TabBar from "@/components/TabBar"
 
 type AppShellProps = {
@@ -20,6 +21,8 @@ export default function AppShell({ title, children }: AppShellProps) {
       <main className="mx-auto mt-3 flex w-full max-w-md flex-col space-y-6 sm:max-w-xl md:max-w-[96%] lg:max-w-[97%] xl:max-w-[98%]">
         {children}
       </main>
+
+      <Footer />
 
       <TabBar />
     </div>

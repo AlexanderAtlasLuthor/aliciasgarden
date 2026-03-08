@@ -10,6 +10,7 @@ import { plantEventsRoutes } from './routes/plantEvents';
 import { plantMeasurementsRoutes } from './routes/plantMeasurements';
 import { plantPhotosRoutes } from './routes/plantPhotos';
 import { plantsRoutes } from './routes/plants';
+import planRoutes from './routes/plan';
 import { weatherRoutes } from './routes/weather';
 import type { Env } from './types/env';
 
@@ -28,6 +29,7 @@ app.route('/', plantsRoutes);
 app.route('/', plantEventsRoutes);
 app.route('/', plantMeasurementsRoutes);
 app.route('/', plantPhotosRoutes);
+app.route('/', planRoutes);
 app.route('/', chatRoutes);
 app.route('/', weatherRoutes);
 app.route('/', diagnoseRoutes);

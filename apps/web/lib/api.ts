@@ -113,6 +113,27 @@ export type DiagnosePlantPhotoResponse = {
   confirmation_questions: string[]
 }
 
+export type WeeklyPlanTask = {
+  task_id: string
+  plant_id: string | null
+  plant_name: string
+  kind: string
+  title: string
+  reason: string
+  due_date: string
+  priority: "low" | "medium" | "high"
+  status: "pending"
+}
+
+export type GenerateWeeklyPlanInput = {
+  profile_id: string
+}
+
+export type WeeklyPlanResponse = {
+  week_start: string
+  tasks: WeeklyPlanTask[]
+}
+
 function getBaseUrl(): string {
   if (!BASE_URL) {
     throw {
@@ -541,5 +562,33 @@ export async function diagnosePlantPhoto(
     confirmation_questions: Array.isArray(data.confirmation_questions)
       ? data.confirmation_questions
       : []
+  }
+}
+
+export async function generateWeeklyPlan(
+  input: GenerateWeeklyPlanInput
+): Promise<WeeklyPlanResponse> {
+  const data = await request<ApiOk<WeeklyPlanResponse>>("/plan/generate", {
+    method: "POST",
+    body: JSON.stringify(input)
+  })
+
+  if (!data.week_start || typeof data.week_start !== "string") {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el inicio de semana del plan."
+    )
+  }
+
+  if (!Array.isArray(data.tasks)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las tareas del plan semanal."
+    )
+  }
+
+  return {
+    week_start: data.week_start,
+    tasks: data.tasks
   }
 }

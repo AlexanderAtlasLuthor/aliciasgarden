@@ -229,6 +229,15 @@ export default function DashboardHero({
     setGreeting("Buenas noches, Alicia")
   }, [])
 
+  const greetingColorClass =
+    greeting === "Buenos días, Alicia"
+      ? "text-yellow-300"
+      : greeting === "Buenas tardes, Alicia"
+        ? "text-orange-300"
+        : greeting === "Buenas noches, Alicia"
+          ? "text-sky-300"
+          : "text-white/60"
+
   const currentTip = shuffledTips[currentTipIndex]
 
   const statusIndicators = [
@@ -243,7 +252,7 @@ export default function DashboardHero({
         <div className="space-y-5">
           {/* Header */}
           <div className="space-y-1.5">
-            <p className="text-sm font-medium text-white/60">{greeting}</p>
+            <p className={`text-sm font-medium ${greetingColorClass}`}>{greeting}</p>
             <h1 className="text-primary text-2xl font-bold tracking-tight md:text-3xl">
               Estado del jardín hoy
             </h1>

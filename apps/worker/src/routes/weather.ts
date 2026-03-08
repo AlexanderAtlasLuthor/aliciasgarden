@@ -117,7 +117,7 @@ export const weatherRoutes = new Hono<{ Bindings: Env }>();
 
 weatherRoutes.get('/weather', async (c) => {
   const url =
-    'https://api.open-meteo.com/v1/forecast?latitude=32.2177&longitude=-82.4135&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&hourly=precipitation_probability';
+    'https://api.open-meteo.com/v1/forecast?latitude=32.2177&longitude=-82.4135&timezone=America%2FNew_York&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&hourly=precipitation_probability';
 
   let response: Response;
 

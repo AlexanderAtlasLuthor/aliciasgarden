@@ -63,7 +63,7 @@ export default function Header({ title }: HeaderProps) {
   }
 
   return (
-    <header className="relative z-40 pt-[max(env(safe-area-inset-top),0.5rem)]">
+    <header className="relative z-40 pt-[env(safe-area-inset-top)]">
       <div className="ag-container">
         {/* Mobile / tablet header */}
         <div className="ag-emerald-plate relative flex items-center justify-center rounded-[24px] border border-white/28 px-4 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.45)] lg:hidden">

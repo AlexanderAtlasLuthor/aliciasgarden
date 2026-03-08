@@ -70,6 +70,24 @@ export type CareEvent = {
   created_at: string
 }
 
+export type PlantMeasurement = {
+  id: string
+  profile_id: string
+  plant_id: string
+  height_cm: number | null
+  leaf_count: number | null
+  notes: string | null
+  measured_at: string
+  created_at: string
+}
+
+export type CreatePlantMeasurementInput = {
+  height_cm?: number
+  leaf_count?: number
+  notes?: string
+  measured_at?: string
+}
+
 export type WeatherResponse = {
   temperature_c: number
   temperature_f: number
@@ -335,6 +353,47 @@ export async function deletePlantEvent(eventId: string): Promise<void> {
   await request<ApiOk<Record<string, never>>>(`/events/${encodedEventId}`, {
     method: "DELETE"
   })
+}
+
+export async function createPlantMeasurement(
+  plantId: string,
+  input: CreatePlantMeasurementInput
+): Promise<{ measurement: PlantMeasurement }> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ measurement: PlantMeasurement }>>(
+    `/plants/${encodedPlantId}/measurements`,
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    }
+  )
+
+  if (!data.measurement) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio la medicion registrada."
+    )
+  }
+
+  return { measurement: data.measurement }
+}
+
+export async function getPlantMeasurements(
+  plantId: string
+): Promise<{ measurements: PlantMeasurement[] }> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ measurements: PlantMeasurement[] }>>(
+    `/plants/${encodedPlantId}/measurements`
+  )
+
+  if (!Array.isArray(data.measurements)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las mediciones de la planta."
+    )
+  }
+
+  return { measurements: data.measurements }
 }
 
 export async function getPlantPhotos(plantId: string): Promise<PlantPhoto[]> {

@@ -7,6 +7,7 @@ import { chatRoutes } from './routes/chat';
 import { diagnoseRoutes } from './routes/diagnose';
 import { healthRoutes } from './routes/health';
 import { plantEventsRoutes } from './routes/plantEvents';
+import { plantMeasurementsRoutes } from './routes/plantMeasurements';
 import { plantPhotosRoutes } from './routes/plantPhotos';
 import { plantsRoutes } from './routes/plants';
 import { weatherRoutes } from './routes/weather';
@@ -25,6 +26,7 @@ app.get('/', (c) => {
 app.route('/', healthRoutes);
 app.route('/', plantsRoutes);
 app.route('/', plantEventsRoutes);
+app.route('/', plantMeasurementsRoutes);
 app.route('/', plantPhotosRoutes);
 app.route('/', chatRoutes);
 app.route('/', weatherRoutes);

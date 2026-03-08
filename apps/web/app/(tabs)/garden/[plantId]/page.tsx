@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card"
 import GlassSurface from "@/components/ui/GlassSurface"
 import MetricTile from "@/components/ui/MetricTile"
 import {
+  createPlantMeasurement,
   createPlantEvent,
   deletePlant,
   deletePlantEvent,
@@ -119,6 +120,12 @@ export default function PlantDetailPage() {
   const [isDeletingPlant, setIsDeletingPlant] = useState(false)
   const [deletePlantError, setDeletePlantError] = useState<string | null>(null)
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
+  const [measurementHeight, setMeasurementHeight] = useState("")
+  const [measurementLeaves, setMeasurementLeaves] = useState("")
+  const [measurementNote, setMeasurementNote] = useState("")
+  const [isSavingMeasurement, setIsSavingMeasurement] = useState(false)
+  const [measurementError, setMeasurementError] = useState<string | null>(null)
+  const [measurementSuccess, setMeasurementSuccess] = useState<string | null>(null)
   const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const nameInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -380,6 +387,78 @@ export default function PlantDetailPage() {
     }
   }, [isDeletingPlant, plantId, router])
 
+  const onSaveMeasurement = useCallback(async () => {
+    if (!plant || isSavingMeasurement) {
+      return
+    }
+
+    const trimmedHeight = measurementHeight.trim()
+    const trimmedLeaves = measurementLeaves.trim()
+    const trimmedNote = measurementNote.trim()
+
+    if (!trimmedHeight && !trimmedLeaves && !trimmedNote) {
+      setMeasurementSuccess(null)
+      setMeasurementError("Ingresa al menos altura, hojas o una nota.")
+      return
+    }
+
+    const payload: {
+      height_cm?: number
+      leaf_count?: number
+      notes?: string
+    } = {}
+
+    if (trimmedHeight) {
+      const parsedHeight = Number(trimmedHeight)
+      if (!Number.isFinite(parsedHeight)) {
+        setMeasurementSuccess(null)
+        setMeasurementError("La altura debe ser un numero valido.")
+        return
+      }
+      payload.height_cm = parsedHeight
+    }
+
+    if (trimmedLeaves) {
+      const parsedLeaves = Number(trimmedLeaves)
+      if (!Number.isInteger(parsedLeaves)) {
+        setMeasurementSuccess(null)
+        setMeasurementError("La cantidad de hojas debe ser un entero.")
+        return
+      }
+      payload.leaf_count = parsedLeaves
+    }
+
+    if (trimmedNote) {
+      payload.notes = trimmedNote
+    }
+
+    setIsSavingMeasurement(true)
+    setMeasurementError(null)
+    setMeasurementSuccess(null)
+
+    try {
+      await createPlantMeasurement(plant.id, payload)
+      setMeasurementHeight("")
+      setMeasurementLeaves("")
+      setMeasurementNote("")
+      setMeasurementSuccess("Medicion guardada.")
+    } catch (error: unknown) {
+      if (isAPIError(error) && error.message.trim()) {
+        setMeasurementError(error.message)
+      } else {
+        setMeasurementError("No se pudo guardar la medicion.")
+      }
+    } finally {
+      setIsSavingMeasurement(false)
+    }
+  }, [
+    isSavingMeasurement,
+    measurementHeight,
+    measurementLeaves,
+    measurementNote,
+    plant,
+  ])
+
   const onNameKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
@@ -629,6 +708,78 @@ export default function PlantDetailPage() {
               <Button asChild variant="secondary">
                 <Link href={`/garden/${plant.id}/toni`}>Preguntar a Toni</Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl p-4" variant="medium">
+          <CardContent className="space-y-4 p-0">
+            <h2 className="text-primary text-lg font-semibold">Crecimiento</h2>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <span className="text-secondary text-xs">Altura (cm)</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.1"
+                  value={measurementHeight}
+                  onChange={(event) => setMeasurementHeight(event.target.value)}
+                  placeholder="Ej. 42"
+                  disabled={isSavingMeasurement}
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/45"
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-secondary text-xs">Hojas</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  value={measurementLeaves}
+                  onChange={(event) => setMeasurementLeaves(event.target.value)}
+                  placeholder="Ej. 7"
+                  disabled={isSavingMeasurement}
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/45"
+                />
+              </label>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-secondary text-xs">Nota</span>
+              <textarea
+                value={measurementNote}
+                onChange={(event) => setMeasurementNote(event.target.value)}
+                placeholder="Ej. Nueva hoja en el brote lateral"
+                rows={3}
+                disabled={isSavingMeasurement}
+                className="w-full rounded-[var(--radius-2)] border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/45"
+              />
+            </label>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => void onSaveMeasurement()}
+                disabled={isSavingMeasurement}
+              >
+                {isSavingMeasurement ? "Guardando..." : "Guardar medicion"}
+              </Button>
+
+              {measurementSuccess ? (
+                <p className="text-sm text-green-300" role="status">
+                  {measurementSuccess}
+                </p>
+              ) : null}
+
+              {measurementError ? (
+                <p className="text-sm text-red-400" role="alert">
+                  {measurementError}
+                </p>
+              ) : null}
             </div>
           </CardContent>
         </Card>

@@ -15,10 +15,12 @@ import {
   deletePlantEvent,
   getPlantById,
   getPlantEvents,
+  getPlantMeasurements,
   isAPIError,
   patchPlant,
   type CareEvent,
   type Plant,
+  type PlantMeasurement,
 } from "@/lib/api"
 import PlantDetailLoading from "./loading"
 
@@ -43,6 +45,14 @@ function formatDateOnly(value: string): string {
   return new Intl.DateTimeFormat("es-ES", {
     dateStyle: "medium",
   }).format(date)
+}
+
+function sortMeasurementsByDateDesc(
+  measurements: PlantMeasurement[]
+): PlantMeasurement[] {
+  return [...measurements].sort(
+    (a, b) => new Date(b.measured_at).getTime() - new Date(a.measured_at).getTime()
+  )
 }
 
 function eventLabel(type: CareEvent["type"]): string {
@@ -123,6 +133,9 @@ export default function PlantDetailPage() {
   const [measurementHeight, setMeasurementHeight] = useState("")
   const [measurementLeaves, setMeasurementLeaves] = useState("")
   const [measurementNote, setMeasurementNote] = useState("")
+  const [measurements, setMeasurements] = useState<PlantMeasurement[]>([])
+  const [isLoadingMeasurements, setIsLoadingMeasurements] = useState(true)
+  const [measurementsError, setMeasurementsError] = useState<string | null>(null)
   const [isSavingMeasurement, setIsSavingMeasurement] = useState(false)
   const [measurementError, setMeasurementError] = useState<string | null>(null)
   const [measurementSuccess, setMeasurementSuccess] = useState<string | null>(null)
@@ -158,6 +171,8 @@ export default function PlantDetailPage() {
     }
 
     setIsLoading(true)
+    setIsLoadingMeasurements(true)
+    setMeasurementsError(null)
     setErrorMessage(null)
 
     try {
@@ -172,6 +187,19 @@ export default function PlantDetailPage() {
 
       setPlant(plantData)
       setEvents(sortedEvents)
+
+      try {
+        const measurementsData = await getPlantMeasurements(plantId)
+        setMeasurements(sortMeasurementsByDateDesc(measurementsData.measurements ?? []))
+        setMeasurementsError(null)
+      } catch (measurementError: unknown) {
+        setMeasurements([])
+        if (isAPIError(measurementError) && measurementError.message.trim()) {
+          setMeasurementsError(measurementError.message)
+        } else {
+          setMeasurementsError("No pudimos cargar el historico de mediciones.")
+        }
+      }
     } catch (error: unknown) {
       const fallbackMessage = "No pudimos cargar la ficha de planta."
 
@@ -181,6 +209,7 @@ export default function PlantDetailPage() {
         setErrorMessage(fallbackMessage)
       }
     } finally {
+      setIsLoadingMeasurements(false)
       setIsLoading(false)
     }
   }, [plantId])
@@ -437,7 +466,16 @@ export default function PlantDetailPage() {
     setMeasurementSuccess(null)
 
     try {
-      await createPlantMeasurement(plant.id, payload)
+      const { measurement } = await createPlantMeasurement(plant.id, payload)
+
+      setMeasurements((previous) =>
+        sortMeasurementsByDateDesc([
+          measurement,
+          ...previous.filter((item) => item.id !== measurement.id),
+        ])
+      )
+      setMeasurementsError(null)
+      setIsLoadingMeasurements(false)
       setMeasurementHeight("")
       setMeasurementLeaves("")
       setMeasurementNote("")
@@ -472,6 +510,56 @@ export default function PlantDetailPage() {
     [onSaveName, onCancelEditing]
   )
 
+  const chartMeasurements = useMemo(() => {
+    return [...measurements]
+      .filter((measurement) => typeof measurement.height_cm === "number")
+      .sort(
+        (a, b) =>
+          new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime()
+      )
+      .slice(-10)
+  }, [measurements])
+
+  const chartData = useMemo(() => {
+    if (chartMeasurements.length < 2) {
+      return null
+    }
+
+    const width = 320
+    const height = 120
+    const padding = 14
+    const values = chartMeasurements.map((measurement) => measurement.height_cm ?? 0)
+    const minValue = Math.min(...values)
+    const maxValue = Math.max(...values)
+    const xStep = (width - padding * 2) / (chartMeasurements.length - 1)
+
+    const points = chartMeasurements
+      .map((measurement, index) => {
+        const value = measurement.height_cm ?? 0
+        const yRatio =
+          maxValue === minValue ? 0.5 : (value - minValue) / (maxValue - minValue)
+        const x = padding + index * xStep
+        const y = height - padding - yRatio * (height - padding * 2)
+        return { x, y }
+      })
+
+    return {
+      width,
+      height,
+      points,
+      polyline: points.map((point) => `${point.x},${point.y}`).join(" "),
+      minValue,
+      maxValue,
+      firstLabel: formatDateOnly(chartMeasurements[0].measured_at),
+      lastLabel: formatDateOnly(
+        chartMeasurements[chartMeasurements.length - 1].measured_at
+      ),
+    }
+  }, [chartMeasurements])
+
+  const timelineEvents = events.slice(0, 30)
+  const recentMeasurements = measurements.slice(0, 10)
+
   if (isLoading) {
     return (
       <div className="ag-container ag-screen">
@@ -502,8 +590,6 @@ export default function PlantDetailPage() {
       </div>
     )
   }
-
-  const timelineEvents = events.slice(0, 30)
 
   return (
     <div className="ag-container ag-screen">
@@ -780,6 +866,109 @@ export default function PlantDetailPage() {
                   {measurementError}
                 </p>
               ) : null}
+            </div>
+
+            <div className="space-y-3 rounded-[var(--radius-3)] border border-white/10 bg-white/5 p-3">
+              <h3 className="text-primary text-sm font-medium">Evolucion de altura</h3>
+
+              {isLoadingMeasurements ? (
+                <p className="text-secondary text-sm">Cargando mediciones...</p>
+              ) : measurementsError ? (
+                <p className="text-sm text-red-400" role="alert">
+                  {measurementsError}
+                </p>
+              ) : chartData ? (
+                <div className="space-y-2">
+                  <svg
+                    viewBox={`0 0 ${chartData.width} ${chartData.height}`}
+                    className="h-32 w-full"
+                    role="img"
+                    aria-label="Grafica simple de crecimiento por altura"
+                  >
+                    <line
+                      x1="14"
+                      y1={chartData.height - 14}
+                      x2={chartData.width - 14}
+                      y2={chartData.height - 14}
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth="1"
+                    />
+                    <polyline
+                      fill="none"
+                      stroke="rgba(134, 239, 172, 0.95)"
+                      strokeWidth="2"
+                      points={chartData.polyline}
+                    />
+                    {chartData.points.map((point, index) => (
+                      <circle
+                        key={`${point.x}-${point.y}-${index}`}
+                        cx={point.x}
+                        cy={point.y}
+                        r="2.6"
+                        fill="rgba(167, 243, 208, 0.95)"
+                      />
+                    ))}
+                  </svg>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-white/65">
+                    <span>{chartData.firstLabel}</span>
+                    <span>
+                      {chartData.minValue.toFixed(1)} - {chartData.maxValue.toFixed(1)} cm
+                    </span>
+                    <span>{chartData.lastLabel}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-secondary text-sm">
+                  Aun no hay suficientes alturas para graficar. Registra al menos dos mediciones con altura.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-3 rounded-[var(--radius-3)] border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-primary text-sm font-medium">Historico reciente</h3>
+                {measurements.length > 0 ? (
+                  <p className="text-muted text-xs">{measurements.length} mediciones</p>
+                ) : null}
+              </div>
+
+              {isLoadingMeasurements ? (
+                <p className="text-secondary text-sm">Cargando mediciones...</p>
+              ) : measurementsError ? (
+                <p className="text-sm text-red-400" role="alert">
+                  {measurementsError}
+                </p>
+              ) : recentMeasurements.length === 0 ? (
+                <p className="text-secondary text-sm">
+                  Aun no hay mediciones guardadas para esta planta.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {recentMeasurements.map((measurement) => (
+                    <li
+                      key={measurement.id}
+                      className="rounded-[var(--radius-3)] border border-white/10 bg-white/6 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <p className="text-primary text-sm font-medium">
+                            {formatDateTime(measurement.measured_at)}
+                          </p>
+                          <p className="text-secondary text-xs">
+                            Altura: {measurement.height_cm != null ? `${measurement.height_cm} cm` : "-"}
+                            {" · "}
+                            Hojas: {measurement.leaf_count != null ? measurement.leaf_count : "-"}
+                          </p>
+                          {measurement.notes ? (
+                            <p className="text-secondary text-sm">{measurement.notes}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </CardContent>
         </Card>

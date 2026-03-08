@@ -13,6 +13,7 @@ vi.mock("@/lib/api", () => ({
   deletePlantEvent: vi.fn(),
   getPlantById: vi.fn(),
   getPlantEvents: vi.fn(),
+  getPlantMeasurements: vi.fn(),
   isAPIError: vi.fn(() => false),
   patchPlant: vi.fn(),
 }))
@@ -33,6 +34,7 @@ vi.mock("next/navigation", () => ({
 
 const mockedGetPlantById = vi.mocked(api.getPlantById)
 const mockedGetPlantEvents = vi.mocked(api.getPlantEvents)
+const mockedGetPlantMeasurements = vi.mocked(api.getPlantMeasurements)
 const mockedCreatePlantMeasurement = vi.mocked(api.createPlantMeasurement)
 const mockedIsAPIError = vi.mocked(api.isAPIError)
 
@@ -53,11 +55,13 @@ describe("garden/[plantId] growth measurement form", () => {
   beforeEach(() => {
     mockedGetPlantById.mockReset()
     mockedGetPlantEvents.mockReset()
+    mockedGetPlantMeasurements.mockReset()
     mockedCreatePlantMeasurement.mockReset()
     mockedIsAPIError.mockReset()
 
     mockedGetPlantById.mockResolvedValue(makePlant())
     mockedGetPlantEvents.mockResolvedValue([])
+    mockedGetPlantMeasurements.mockResolvedValue({ measurements: [] })
     mockedIsAPIError.mockImplementation((error: unknown) => {
       if (!error || typeof error !== "object") return false
       const maybe = error as { code?: unknown; message?: unknown }

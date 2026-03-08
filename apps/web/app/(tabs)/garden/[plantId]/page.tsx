@@ -623,8 +623,8 @@ export default function PlantDetailPage() {
               <Button asChild variant="secondary">
                 <Link href={`/garden/${plant.id}/photos`}>Subir foto</Link>
               </Button>
-              <Button variant="secondary" disabled>
-                Preguntar a Toni
+              <Button asChild variant="secondary">
+                <Link href={`/garden/${plant.id}/toni`}>Preguntar a Toni</Link>
               </Button>
             </div>
           </CardContent>

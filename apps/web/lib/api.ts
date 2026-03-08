@@ -411,3 +411,22 @@ export async function sendChatMessage(input: {
     reply: data.reply
   }
 }
+
+export async function sendPlantChatMessage(
+  plantId: string,
+  message: string
+): Promise<{ thread_id: string; message: string }> {
+  const encodedPlantId = encodeURIComponent(plantId)
+  const data = await request<ApiOk<{ thread_id: string; message: string }>>(
+    `/plants/${encodedPlantId}/chat/send`,
+    {
+      method: "POST",
+      body: JSON.stringify({ message })
+    }
+  )
+
+  return {
+    thread_id: data.thread_id,
+    message: data.message
+  }
+}

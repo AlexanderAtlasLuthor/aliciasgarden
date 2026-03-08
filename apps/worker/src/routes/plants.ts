@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import { jsonError, jsonOk, safeParseJson } from '../lib/http';
 import { getSupabase } from '../lib/supabase';
+import { PlantNotFoundError, sendPlantChatMessage } from '../services/chat';
 import type { Env } from '../types/env';
 
 type PlantCreateInput = {
@@ -21,6 +22,10 @@ type PlantInsertPayload = {
 	light: string | null;
 	watering_interval_days: number | null;
 	notes: string | null;
+};
+
+type PlantChatSendInput = {
+	message?: unknown;
 };
 
 function asObject(value: unknown): Record<string, unknown> | null {
@@ -43,6 +48,14 @@ function normalizeOptionalNumber(value: unknown): number | null {
 	if (typeof value !== 'number' || !Number.isFinite(value)) {
 		return null;
 	}
+	return value;
+}
+
+function asOptionalString(value: unknown): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
+	}
+
 	return value;
 }
 
@@ -296,6 +309,38 @@ plantsRoutes.patch('/plants/:id', async (c) => {
 		const message = error instanceof Error ? error.message : 'Unknown error';
 		return jsonError(c, 'DB_ERROR', 'No se pudo actualizar la planta.', 500, {
 			hint: message,
+		});
+	}
+});
+
+plantsRoutes.post('/plants/:id/chat/send', async (c) => {
+	const plantId = c.req.param('id');
+
+	const parsedBody = await safeParseJson(c);
+	const body = asObject(parsedBody);
+	const input: PlantChatSendInput = body ?? {};
+
+	const rawMessage = asOptionalString(input.message);
+	const message = rawMessage?.trim();
+
+	if (!message) {
+		return jsonError(c, 'VALIDATION_ERROR', 'message es requerido', 400);
+	}
+
+	try {
+		const result = await sendPlantChatMessage(message, plantId, c.env);
+		return jsonOk(c, {
+			thread_id: result.thread_id,
+			message: result.reply,
+		});
+	} catch (error) {
+		if (error instanceof PlantNotFoundError) {
+			return jsonError(c, 'NOT_FOUND', 'Planta no encontrada.', 404);
+		}
+
+		const messageText = error instanceof Error ? error.message : 'Unknown error';
+		return jsonError(c, 'DB_ERROR', 'No se pudo enviar el mensaje.', 500, {
+			hint: messageText,
 		});
 	}
 });

@@ -60,20 +60,34 @@ type WeatherCardProps = {
 }
 
 function formatLiveDate(): string {
+  const timeZone = "America/New_York"
   const baseDate = new Date()
+
+  const hour24 = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone,
+    }).format(baseDate)
+  )
+
   const formattedDate = new Intl.DateTimeFormat("es-ES", {
     day: "numeric",
     month: "long",
     year: "numeric",
-    timeZone: "America/New_York",
+    timeZone,
   }).format(baseDate)
-  const formattedTime = new Intl.DateTimeFormat("es-ES", {
-    hour: "2-digit",
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/New_York",
+    hour12: true,
+    timeZone,
   }).format(baseDate)
 
-  return `Hoy, ${formattedDate} · ${formattedTime} ET`
+  const contextualPrefix =
+    hour24 < 5 ? "Madrugada del" : hour24 >= 19 ? "Esta noche," : "Hoy,"
+
+  return `${contextualPrefix} ${formattedDate} · ${formattedTime} ET`
 }
 
 export default function WeatherCard({

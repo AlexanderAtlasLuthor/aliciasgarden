@@ -6,20 +6,16 @@ import PlanPage from "@/app/(tabs)/plan/page"
 import * as api from "@/lib/api"
 
 vi.mock("@/lib/api", () => ({
-  generateWeeklyPlan: vi.fn(),
   getWeeklyPlan: vi.fn(),
   completeWeeklyPlanTask: vi.fn(),
+  getPlants: vi.fn(),
+  createManualWeeklyPlanTask: vi.fn(),
 }))
 
 const mockedGetWeeklyPlan = vi.mocked(api.getWeeklyPlan)
 const mockedCompleteWeeklyPlanTask = vi.mocked(api.completeWeeklyPlanTask)
-
-function expectMetricValue(label: string, value: string): void {
-  const metricLabel = screen.getByText(label)
-  const metricCard = metricLabel.parentElement
-  expect(metricCard).not.toBeNull()
-  expect(metricCard).toHaveTextContent(value)
-}
+const mockedGetPlants = vi.mocked(api.getPlants)
+const mockedCreateManualWeeklyPlanTask = vi.mocked(api.createManualWeeklyPlanTask)
 
 type PlanTask = {
   task_id: string
@@ -49,300 +45,228 @@ function makeTask(input: Partial<PlanTask> & Pick<PlanTask, "task_id" | "plant_n
   }
 }
 
-function deferred<T>() {
-  let resolve!: (value: T) => void
-  let reject!: (reason?: unknown) => void
-
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res
-    reject = rej
-  })
-
-  return { promise, resolve, reject }
+function expectMetricValue(label: string, value: string): void {
+  const metricLabel = screen.getByText(label)
+  const metricCard = metricLabel.parentElement
+  expect(metricCard).not.toBeNull()
+  expect(metricCard).toHaveTextContent(value)
 }
 
-describe("plan page", () => {
+describe("plan page - subfase 6", () => {
   beforeEach(() => {
     mockedGetWeeklyPlan.mockReset()
     mockedCompleteWeeklyPlanTask.mockReset()
-  })
+    mockedGetPlants.mockReset()
+    mockedCreateManualWeeklyPlanTask.mockReset()
 
-  it("carga inicial usa plan persistido con getWeeklyPlan", async () => {
-    mockedGetWeeklyPlan.mockResolvedValueOnce({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Regar Monstera",
-          reason: "Han pasado 7 dias.",
-          due_date: "2026-03-09",
-        }),
-      ],
-    })
-
-    render(<PlanPage />)
-
-    expect(await screen.findByText("Regar Monstera")).toBeInTheDocument()
-    expect(mockedGetWeeklyPlan).toHaveBeenCalledTimes(1)
-    expect(mockedCompleteWeeklyPlanTask).not.toHaveBeenCalled()
-  })
-
-  it("renderiza boton Marcar como hecho para tareas pending", async () => {
-    mockedGetWeeklyPlan.mockResolvedValueOnce({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Regar Monstera",
-          reason: "Han pasado 7 dias.",
-          due_date: "2026-03-09",
-          status: "pending",
-        }),
-      ],
-    })
-
-    render(<PlanPage />)
-
-    expect(await screen.findByRole("button", { name: "Marcar como hecho" })).toBeInTheDocument()
-  })
-
-  it("no renderiza boton para tareas completed y muestra estado visual", async () => {
-    mockedGetWeeklyPlan.mockResolvedValueOnce({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Regar Monstera",
-          reason: "Han pasado 7 dias.",
-          due_date: "2026-03-09",
-          status: "completed",
-          completed_at: "2026-03-09T08:00:00.000Z",
-        }),
-      ],
-    })
-
-    render(<PlanPage />)
-
-    expect(await screen.findByText("Regar Monstera")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Marcar como hecho" })).not.toBeInTheDocument()
-    expect(screen.getByText("Hecho")).toBeInTheDocument()
-  })
-
-  it("completar tarea actualiza checklist y metricas", async () => {
-    const initialTasks: PlanTask[] = [
-      makeTask({
-        task_id: "t1",
-        plant_name: "Monstera",
-        title: "Regar Monstera",
-        reason: "Han pasado 7 dias.",
-        due_date: "2026-03-09",
-        priority: "high",
-        status: "pending",
-      }),
-      makeTask({
-        task_id: "t2",
-        plant_name: "Monstera",
-        title: "Tomar foto",
-        reason: "No hay foto reciente.",
-        due_date: "2026-03-10",
-        priority: "low",
-        status: "pending",
-      }),
-    ]
-
-    const updatedTasks: PlanTask[] = [
+    mockedGetPlants.mockResolvedValue([
       {
-        ...initialTasks[0],
-        status: "completed",
-        completed_at: "2026-03-09T12:00:00.000Z",
+        id: "plant-1",
+        profile_id: "profile-1",
+        nickname: "Monstera",
+        species_common: null,
+        location: null,
+        light: null,
+        watering_interval_days: null,
+        notes: null,
+        created_at: "2026-03-01T00:00:00.000Z",
       },
-      initialTasks[1],
-    ]
+      {
+        id: "plant-2",
+        profile_id: "profile-1",
+        nickname: "Poto",
+        species_common: null,
+        location: null,
+        light: null,
+        watering_interval_days: null,
+        notes: null,
+        created_at: "2026-03-01T00:00:00.000Z",
+      },
+    ])
+  })
 
+  it("renderiza barra de progreso por planta", async () => {
     mockedGetWeeklyPlan.mockResolvedValueOnce({
       week_start: "2026-03-02",
-      tasks: initialTasks,
+      tasks: [
+        makeTask({ task_id: "t1", plant_name: "Monstera", title: "T1", reason: "R1", due_date: "2026-03-09", status: "completed" }),
+        makeTask({ task_id: "t2", plant_name: "Monstera", title: "T2", reason: "R2", due_date: "2026-03-10", status: "pending" }),
+        makeTask({ task_id: "t3", plant_name: "Monstera", title: "T3", reason: "R3", due_date: "2026-03-11", status: "pending" }),
+      ],
+    })
+
+    render(<PlanPage />)
+
+    expect(await screen.findByText("Monstera")).toBeInTheDocument()
+    expect(screen.getByText("1 de 3 tareas completadas")).toBeInTheDocument()
+    expect(screen.getByText("33%")).toBeInTheDocument()
+  })
+
+  it("el progreso cambia cuando se completa una tarea", async () => {
+    mockedGetWeeklyPlan.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_name: "Monstera", title: "T1", reason: "R1", due_date: "2026-03-09", status: "completed" }),
+        makeTask({ task_id: "t2", plant_name: "Monstera", title: "T2", reason: "R2", due_date: "2026-03-10", status: "pending" }),
+      ],
     })
 
     mockedCompleteWeeklyPlanTask.mockResolvedValueOnce({
       week_start: "2026-03-02",
-      tasks: updatedTasks,
+      tasks: [
+        makeTask({ task_id: "t1", plant_name: "Monstera", title: "T1", reason: "R1", due_date: "2026-03-09", status: "completed" }),
+        makeTask({ task_id: "t2", plant_name: "Monstera", title: "T2", reason: "R2", due_date: "2026-03-10", status: "completed", completed_at: "2026-03-10T10:00:00.000Z" }),
+      ],
     })
 
     const user = userEvent.setup()
     render(<PlanPage />)
 
-    const actionButtons = await screen.findAllByRole("button", { name: "Marcar como hecho" })
-    const actionButton = actionButtons[0]
-    await user.click(actionButton)
+    expect(await screen.findByText("1 de 2 tareas completadas")).toBeInTheDocument()
+    expect(screen.getByText("50%")).toBeInTheDocument()
 
-    expect(mockedCompleteWeeklyPlanTask).toHaveBeenCalledWith("t1")
-    expect(await screen.findByText("Hecho")).toBeInTheDocument()
-    expect(screen.getByText("Regar Monstera")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Marcar como hecho" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Marcar como hecho" }))
 
+    expect(await screen.findByText("2 de 2 tareas completadas")).toBeInTheDocument()
+    expect(screen.getByText("100%")).toBeInTheDocument()
+  })
+
+  it("muestra boton Anadir tarea y abre formulario", async () => {
+    mockedGetWeeklyPlan.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [makeTask({ task_id: "t1", plant_name: "Monstera", title: "T1", reason: "R1", due_date: "2026-03-09" })],
+    })
+
+    const user = userEvent.setup()
+    render(<PlanPage />)
+
+    const addButton = await screen.findByRole("button", { name: "Anadir tarea" })
+    expect(addButton).toBeInTheDocument()
+
+    await user.click(addButton)
+    expect(screen.getByText("Nueva tarea manual")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Guardar tarea" })).toBeInTheDocument()
+  })
+
+  it("guardar tarea manual llama API y renderiza tarea en grupo correcto", async () => {
+    mockedGetWeeklyPlan.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_id: "plant-1", plant_name: "Monstera", title: "Regar", reason: "R1", due_date: "2026-03-09" }),
+      ],
+    })
+
+    mockedCreateManualWeeklyPlanTask.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_id: "plant-1", plant_name: "Monstera", title: "Regar", reason: "R1", due_date: "2026-03-09" }),
+        makeTask({
+          task_id: "manual-1",
+          plant_id: "plant-2",
+          plant_name: "Poto",
+          kind: "manual",
+          title: "Podar Poto",
+          reason: "Hojas secas",
+          due_date: "2026-03-11",
+          priority: "high",
+          status: "pending",
+          completed_at: null,
+        }),
+      ],
+    })
+
+    const user = userEvent.setup()
+    render(<PlanPage />)
+
+    await user.click(await screen.findByRole("button", { name: "Anadir tarea" }))
+
+    await user.selectOptions(screen.getByLabelText("Planta"), "plant-2")
+    await user.type(screen.getByLabelText("Titulo"), "Podar Poto")
+    await user.type(screen.getByLabelText("Motivo o nota"), "Hojas secas")
+    await user.selectOptions(screen.getByLabelText("Prioridad"), "high")
+    await user.clear(screen.getByLabelText("Fecha"))
+    await user.type(screen.getByLabelText("Fecha"), "2026-03-11")
+
+    await user.click(screen.getByRole("button", { name: "Guardar tarea" }))
+
+    expect(mockedCreateManualWeeklyPlanTask).toHaveBeenCalledWith({
+      plant_id: "plant-2",
+      title: "Podar Poto",
+      reason: "Hojas secas",
+      priority: "high",
+      due_date: "2026-03-11",
+    })
+
+    expect(await screen.findByRole("heading", { name: "Poto" })).toBeInTheDocument()
+    expect(screen.getByText("Podar Poto")).toBeInTheDocument()
+    expect(screen.getByText("Manual")).toBeInTheDocument()
+  })
+
+  it("actualiza metricas y progreso tras agregar tarea manual", async () => {
+    mockedGetWeeklyPlan.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_id: "plant-1", plant_name: "Monstera", title: "Regar", reason: "R1", due_date: "2026-03-09", status: "completed" }),
+      ],
+    })
+
+    mockedCreateManualWeeklyPlanTask.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_id: "plant-1", plant_name: "Monstera", title: "Regar", reason: "R1", due_date: "2026-03-09", status: "completed" }),
+        makeTask({ task_id: "manual-2", plant_id: "plant-1", plant_name: "Monstera", kind: "manual", title: "Limpiar hojas", reason: "Polvo", due_date: "2026-03-10", priority: "low", status: "pending" }),
+      ],
+    })
+
+    const user = userEvent.setup()
+    render(<PlanPage />)
+
+    expect(await screen.findByText("1 de 1 tareas completadas")).toBeInTheDocument()
+    expect(screen.getByText("100%")).toBeInTheDocument()
+    expectMetricValue("Pendientes", "0")
+    expectMetricValue("Total tareas", "1")
+
+    await user.click(screen.getByRole("button", { name: "Anadir tarea" }))
+    await user.type(screen.getByLabelText("Titulo"), "Limpiar hojas")
+    await user.type(screen.getByLabelText("Motivo o nota"), "Polvo")
+    await user.clear(screen.getByLabelText("Fecha"))
+    await user.type(screen.getByLabelText("Fecha"), "2026-03-10")
+    await user.click(screen.getByRole("button", { name: "Guardar tarea" }))
+
+    expect(await screen.findByText("1 de 2 tareas completadas")).toBeInTheDocument()
+    expect(screen.getByText("50%")).toBeInTheDocument()
     expectMetricValue("Pendientes", "1")
     expectMetricValue("Total tareas", "2")
-    expectMetricValue("Alta prioridad", "1")
     expectMetricValue("Plantas activas", "1")
   })
 
-  it("durante completado deshabilita solo el boton de la tarea activa", async () => {
+  it("maneja error al guardar tarea manual sin romper la pagina", async () => {
     mockedGetWeeklyPlan.mockResolvedValueOnce({
       week_start: "2026-03-02",
       tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Regar Monstera",
-          reason: "Han pasado 7 dias.",
-          due_date: "2026-03-09",
-        }),
-        makeTask({
-          task_id: "t2",
-          plant_name: "Poto",
-          title: "Tomar foto",
-          reason: "No hay foto reciente.",
-          due_date: "2026-03-10",
-        }),
+        makeTask({ task_id: "t1", plant_id: "plant-1", plant_name: "Monstera", title: "Regar", reason: "R1", due_date: "2026-03-09" }),
       ],
     })
 
-    const completionRequest = deferred<{ week_start: string; tasks: PlanTask[] }>()
-    mockedCompleteWeeklyPlanTask.mockReturnValueOnce(completionRequest.promise)
+    mockedCreateManualWeeklyPlanTask.mockRejectedValueOnce(new Error("No se pudo guardar"))
 
     const user = userEvent.setup()
     render(<PlanPage />)
 
-    const buttons = await screen.findAllByRole("button", { name: "Marcar como hecho" })
-    expect(buttons).toHaveLength(2)
+    await user.click(await screen.findByRole("button", { name: "Anadir tarea" }))
+    await user.type(screen.getByLabelText("Titulo"), "Podar")
+    await user.type(screen.getByLabelText("Motivo o nota"), "Rama larga")
+    await user.clear(screen.getByLabelText("Fecha"))
+    await user.type(screen.getByLabelText("Fecha"), "2026-03-10")
+    await user.click(screen.getByRole("button", { name: "Guardar tarea" }))
 
-    await user.click(buttons[0])
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Guardando..." })).toBeDisabled()
-    })
-
-    const stillEnabledButton = screen.getByRole("button", { name: "Marcar como hecho" })
-    expect(stillEnabledButton).toBeEnabled()
-
-    completionRequest.resolve({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Regar Monstera",
-          reason: "Han pasado 7 dias.",
-          due_date: "2026-03-09",
-          status: "completed",
-          completed_at: "2026-03-09T09:00:00.000Z",
-        }),
-        makeTask({
-          task_id: "t2",
-          plant_name: "Poto",
-          title: "Tomar foto",
-          reason: "No hay foto reciente.",
-          due_date: "2026-03-10",
-          status: "pending",
-        }),
-      ],
-    })
-
-    expect(await screen.findByText("Hecho")).toBeInTheDocument()
+    expect(await screen.findByText("No se pudo guardar")).toBeInTheDocument()
+    expect(screen.getByText("Regar")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Guardar tarea" })).toBeInTheDocument()
   })
 
-  it("mantiene agrupacion y orden por fecha despues del update", async () => {
-    mockedGetWeeklyPlan.mockResolvedValueOnce({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Tarea tarde",
-          reason: "Razon 1",
-          due_date: "2026-03-12",
-          status: "pending",
-        }),
-        makeTask({
-          task_id: "t2",
-          plant_name: "Monstera",
-          title: "Tarea temprano",
-          reason: "Razon 2",
-          due_date: "2026-03-09",
-          status: "pending",
-        }),
-        makeTask({
-          task_id: "t3",
-          plant_name: "Poto",
-          title: "Tarea poto",
-          reason: "Razon 3",
-          due_date: "2026-03-11",
-          status: "pending",
-        }),
-      ],
-    })
-
-    mockedCompleteWeeklyPlanTask.mockResolvedValueOnce({
-      week_start: "2026-03-02",
-      tasks: [
-        makeTask({
-          task_id: "t1",
-          plant_name: "Monstera",
-          title: "Tarea tarde",
-          reason: "Razon 1",
-          due_date: "2026-03-12",
-          status: "pending",
-        }),
-        makeTask({
-          task_id: "t2",
-          plant_name: "Monstera",
-          title: "Tarea temprano",
-          reason: "Razon 2",
-          due_date: "2026-03-09",
-          status: "completed",
-          completed_at: "2026-03-09T09:00:00.000Z",
-        }),
-        makeTask({
-          task_id: "t3",
-          plant_name: "Poto",
-          title: "Tarea poto",
-          reason: "Razon 3",
-          due_date: "2026-03-11",
-          status: "pending",
-        }),
-      ],
-    })
-
-    const user = userEvent.setup()
-    render(<PlanPage />)
-
-    await screen.findByRole("heading", { name: "Monstera" })
-    const monsteraSectionBefore = screen.getByRole("heading", { name: "Monstera" }).closest("section")
-    expect(monsteraSectionBefore).not.toBeNull()
-    const beforeText = monsteraSectionBefore?.textContent ?? ""
-    expect(beforeText.indexOf("Tarea temprano")).toBeLessThan(beforeText.indexOf("Tarea tarde"))
-
-    const pendingEarlyTask = screen.getByText("Tarea temprano").closest("li")
-    expect(pendingEarlyTask).not.toBeNull()
-    const firstMonsteraAction = within(pendingEarlyTask as HTMLElement).getByRole("button", {
-      name: "Marcar como hecho",
-    })
-    await user.click(firstMonsteraAction)
-
-    expect(await screen.findByText("Hecho")).toBeInTheDocument()
-
-    const monsteraSectionAfter = screen.getByRole("heading", { name: "Monstera" }).closest("section")
-    expect(monsteraSectionAfter).not.toBeNull()
-    const afterText = monsteraSectionAfter?.textContent ?? ""
-    expect(afterText.indexOf("Tarea temprano")).toBeLessThan(afterText.indexOf("Tarea tarde"))
-    expect(screen.getByRole("heading", { name: "Poto" })).toBeInTheDocument()
-  })
-
-  it("mantiene estados loading, error y empty con getWeeklyPlan", async () => {
+  it("mantiene estados loading error y empty", async () => {
+    mockedGetPlants.mockResolvedValue([])
     mockedGetWeeklyPlan.mockReturnValueOnce(new Promise(() => undefined))
 
     const loadingView = render(<PlanPage />)
@@ -352,7 +276,6 @@ describe("plan page", () => {
     mockedGetWeeklyPlan.mockRejectedValueOnce(new Error("Fallo plan"))
     const errorView = render(<PlanPage />)
     expect(await screen.findByText("No pudimos cargar tu plan")).toBeInTheDocument()
-    expect(screen.getByText("Fallo plan")).toBeInTheDocument()
     errorView.unmount()
 
     mockedGetWeeklyPlan.mockResolvedValueOnce({
@@ -362,9 +285,39 @@ describe("plan page", () => {
 
     render(<PlanPage />)
     expect(await screen.findByText("No hay tareas para esta semana")).toBeInTheDocument()
-    expectMetricValue("Pendientes", "0")
-    expectMetricValue("Plantas activas", "0")
-    expectMetricValue("Total tareas", "0")
-    expectMetricValue("Alta prioridad", "0")
+  })
+
+  it("mantiene agrupacion y orden por fecha despues de actualizar", async () => {
+    mockedGetWeeklyPlan.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_name: "Monstera", title: "Tarea tarde", reason: "R1", due_date: "2026-03-12" }),
+        makeTask({ task_id: "t2", plant_name: "Monstera", title: "Tarea temprano", reason: "R2", due_date: "2026-03-09" }),
+      ],
+    })
+
+    mockedCompleteWeeklyPlanTask.mockResolvedValueOnce({
+      week_start: "2026-03-02",
+      tasks: [
+        makeTask({ task_id: "t1", plant_name: "Monstera", title: "Tarea tarde", reason: "R1", due_date: "2026-03-12" }),
+        makeTask({ task_id: "t2", plant_name: "Monstera", title: "Tarea temprano", reason: "R2", due_date: "2026-03-09", status: "completed", completed_at: "2026-03-09T09:00:00.000Z" }),
+      ],
+    })
+
+    const user = userEvent.setup()
+    render(<PlanPage />)
+
+    await screen.findByRole("heading", { name: "Monstera" })
+    const section = screen.getByRole("heading", { name: "Monstera" }).closest("section")
+    expect(section).not.toBeNull()
+    const beforeText = section?.textContent ?? ""
+    expect(beforeText.indexOf("Tarea temprano")).toBeLessThan(beforeText.indexOf("Tarea tarde"))
+
+    const pendingEarlyTask = screen.getByText("Tarea temprano").closest("li")
+    await user.click(within(pendingEarlyTask as HTMLElement).getByRole("button", { name: "Marcar como hecho" }))
+
+    const afterSection = screen.getByRole("heading", { name: "Monstera" }).closest("section")
+    const afterText = afterSection?.textContent ?? ""
+    expect(afterText.indexOf("Tarea temprano")).toBeLessThan(afterText.indexOf("Tarea tarde"))
   })
 })

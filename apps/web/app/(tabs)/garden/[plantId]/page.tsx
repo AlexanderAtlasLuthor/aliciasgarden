@@ -248,7 +248,7 @@ export default function PlantDetailPage() {
     if (!plant?.watering_interval_days || !lastWater || !nextRecommendedDate) {
       return {
         label: "Sin datos",
-        helper: "Configura intervalo y registra riegos para estimar estado.",
+        helper: "Configura riegos para estimar estado.",
         variant: "default" as const,
       }
     }

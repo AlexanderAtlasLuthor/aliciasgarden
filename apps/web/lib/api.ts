@@ -135,6 +135,14 @@ export type WeeklyPlanResponse = {
   tasks: WeeklyPlanTask[]
 }
 
+export type CreateManualWeeklyPlanTaskInput = {
+  plant_id: string
+  title: string
+  reason: string
+  priority: "low" | "medium" | "high"
+  due_date: string
+}
+
 function getBaseUrl(): string {
   if (!BASE_URL) {
     throw {
@@ -627,6 +635,34 @@ export async function completeWeeklyPlanTask(
       method: "POST"
     }
   )
+
+  if (!data.week_start || typeof data.week_start !== "string") {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio el inicio de semana del plan."
+    )
+  }
+
+  if (!Array.isArray(data.tasks)) {
+    throw createAPIError(
+      "INVALID_RESPONSE",
+      "El servidor no devolvio las tareas del plan semanal."
+    )
+  }
+
+  return {
+    week_start: data.week_start,
+    tasks: data.tasks
+  }
+}
+
+export async function createManualWeeklyPlanTask(
+  input: CreateManualWeeklyPlanTaskInput
+): Promise<WeeklyPlanResponse> {
+  const data = await request<ApiOk<WeeklyPlanResponse>>("/plan/tasks/manual", {
+    method: "POST",
+    body: JSON.stringify(input)
+  })
 
   if (!data.week_start || typeof data.week_start !== "string") {
     throw createAPIError(

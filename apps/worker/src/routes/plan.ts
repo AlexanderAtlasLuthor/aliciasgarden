@@ -9,6 +9,14 @@ type GeneratePlanInput = {
   profile_id?: unknown;
 };
 
+type ManualTaskInput = {
+  plant_id?: unknown;
+  title?: unknown;
+  reason?: unknown;
+  priority?: unknown;
+  due_date?: unknown;
+};
+
 type WeeklyPlanRow = {
   week_start: string;
   tasks_json: unknown;
@@ -17,6 +25,11 @@ type WeeklyPlanRow = {
 type DbErrorLike = {
   code?: string;
   message?: string;
+};
+
+type PlantOwnershipRow = {
+  id: string;
+  nickname: string;
 };
 
 type CareEventType = 'water' | 'pest' | 'note';
@@ -68,6 +81,32 @@ function getCurrentWeekStart(): string {
 
 function toTasks(value: unknown): WeeklyPlanTask[] {
   return Array.isArray(value) ? (value as WeeklyPlanTask[]) : [];
+}
+
+function isValidTaskPriority(value: unknown): value is WeeklyPlanTask['priority'] {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [yearText, monthText, dayText] = value.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() === month - 1
+    && parsed.getUTCDate() === day
+  );
+}
+
+function buildManualTaskId(plantId: string): string {
+  return `manual-${Date.now()}-${plantId}`;
 }
 
 function isUniqueViolation(error: DbErrorLike | null | undefined): boolean {
@@ -170,6 +209,25 @@ async function persistWeeklyPlan(
   return {
     row: (updatedAfterConflict as WeeklyPlanRow | null) ?? null,
     error: updateAfterConflictError,
+  };
+}
+
+async function getOwnedPlant(
+  profileId: string,
+  plantId: string,
+  env: Env,
+): Promise<{ plant: PlantOwnershipRow | null; error: DbErrorLike | null }> {
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from('plants')
+    .select('id, nickname')
+    .eq('id', plantId)
+    .eq('profile_id', profileId)
+    .maybeSingle();
+
+  return {
+    plant: (data as PlantOwnershipRow | null) ?? null,
+    error,
   };
 }
 
@@ -378,6 +436,128 @@ planRoutes.post('/plan/tasks/:taskId/complete', async (c) => {
   } catch (error) {
     const messageText = error instanceof Error ? error.message : 'Unknown error';
     return jsonError(c, 'DB_ERROR', 'No se pudo completar la tarea del plan semanal.', 500, {
+      hint: messageText,
+    });
+  }
+});
+
+planRoutes.post('/plan/tasks/manual', async (c) => {
+  const profileId = asRequiredTrimmedString(c.env.PROFILE_ID);
+
+  if (!profileId) {
+    return jsonError(c, 'VALIDATION_ERROR', 'PROFILE_ID es requerido.', 500);
+  }
+
+  const parsedBody = await safeParseJson(c);
+  const body = asObject(parsedBody);
+
+  if (!body) {
+    return jsonError(c, 'VALIDATION_ERROR', 'Body JSON invalido.', 400);
+  }
+
+  const input: ManualTaskInput = body;
+  const plantId = asRequiredTrimmedString(input.plant_id);
+  const title = asRequiredTrimmedString(input.title);
+  const reason = asRequiredTrimmedString(input.reason);
+  const dueDate = asRequiredTrimmedString(input.due_date);
+
+  if (!plantId) {
+    return jsonError(c, 'VALIDATION_ERROR', 'plant_id es requerido.', 400);
+  }
+
+  if (!title) {
+    return jsonError(c, 'VALIDATION_ERROR', 'title es requerido.', 400);
+  }
+
+  if (!reason) {
+    return jsonError(c, 'VALIDATION_ERROR', 'reason es requerido.', 400);
+  }
+
+  if (!isValidTaskPriority(input.priority)) {
+    return jsonError(c, 'VALIDATION_ERROR', 'priority invalida.', 400);
+  }
+
+  if (!dueDate || !isValidDateOnly(dueDate)) {
+    return jsonError(c, 'VALIDATION_ERROR', 'due_date invalida.', 400);
+  }
+
+  const weekStart = getCurrentWeekStart();
+
+  try {
+    const { plant, error: plantError } = await getOwnedPlant(profileId, plantId, c.env);
+
+    if (plantError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo validar la planta.', 500, {
+        hint: plantError.message ?? 'Unknown database error',
+      });
+    }
+
+    if (!plant) {
+      return jsonError(c, 'PLANT_NOT_FOUND', 'No existe la planta solicitada para este perfil.', 404);
+    }
+
+    let { row: storedPlan, error: storedPlanError } = await getStoredWeeklyPlan(profileId, weekStart, c.env);
+
+    if (storedPlanError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo leer el plan semanal.', 500, {
+        hint: storedPlanError.message ?? 'Unknown database error',
+      });
+    }
+
+    if (!storedPlan) {
+      const generated = await generateWeeklyPlan(profileId, c.env);
+      const { row: persisted, error: persistError } = await persistWeeklyPlan(profileId, generated, c.env);
+
+      if (persistError || !persisted) {
+        return jsonError(c, 'DB_ERROR', 'No se pudo guardar el plan semanal.', 500, {
+          hint: persistError?.message ?? 'Unknown database error',
+        });
+      }
+
+      storedPlan = persisted;
+      storedPlanError = null;
+    }
+
+    const tasks = toTasks(storedPlan.tasks_json);
+    const manualTask: WeeklyPlanTask = {
+      task_id: buildManualTaskId(plant.id),
+      plant_id: plant.id,
+      plant_name: plant.nickname?.trim() || 'Planta sin nombre',
+      kind: 'manual',
+      title,
+      reason,
+      due_date: dueDate,
+      priority: input.priority,
+      status: 'pending',
+      completed_at: null,
+    };
+
+    const updatedTasks = [...tasks, manualTask];
+    const updatedAt = new Date().toISOString();
+
+    const supabase = getSupabase(c.env);
+    const { error: updateError } = await supabase
+      .from('weekly_plans')
+      .update({
+        tasks_json: updatedTasks,
+        updated_at: updatedAt,
+      })
+      .eq('profile_id', profileId)
+      .eq('week_start', storedPlan.week_start);
+
+    if (updateError) {
+      return jsonError(c, 'DB_ERROR', 'No se pudo actualizar el plan semanal.', 500, {
+        hint: updateError.message,
+      });
+    }
+
+    return jsonOk(c, {
+      week_start: storedPlan.week_start,
+      tasks: updatedTasks,
+    });
+  } catch (error) {
+    const messageText = error instanceof Error ? error.message : 'Unknown error';
+    return jsonError(c, 'DB_ERROR', 'No se pudo crear la tarea manual del plan semanal.', 500, {
       hint: messageText,
     });
   }

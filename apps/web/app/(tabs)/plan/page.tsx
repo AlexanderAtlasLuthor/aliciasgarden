@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react"
 
 import {
   completeWeeklyPlanTask,
+  createManualWeeklyPlanTask,
+  getPlants,
   getWeeklyPlan,
+  type Plant,
   type WeeklyPlanTask,
 } from "@/lib/api"
 
@@ -76,12 +79,27 @@ function completionText(pendingTasks: number, totalTasks: number): string {
   return `${pendingTasks} por resolver`
 }
 
+function getTodayDateOnly(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export default function PlanPage() {
   const [weekStart, setWeekStart] = useState<string | null>(null)
   const [tasks, setTasks] = useState<WeeklyPlanTask[]>([])
+  const [plants, setPlants] = useState<Plant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null)
+  const [isManualFormOpen, setIsManualFormOpen] = useState(false)
+  const [isSavingManualTask, setIsSavingManualTask] = useState(false)
+  const [manualFormError, setManualFormError] = useState<string | null>(null)
+  const [manualForm, setManualForm] = useState({
+    plant_id: "",
+    title: "",
+    reason: "",
+    priority: "medium" as WeeklyPlanTask["priority"],
+    due_date: getTodayDateOnly(),
+  })
 
   const getErrorMessage = (loadError: unknown, fallbackMessage: string): string => {
     if (loadError && typeof loadError === "object" && "message" in loadError) {
@@ -109,6 +127,25 @@ export default function PlanPage() {
     }
   }
 
+  const loadPlants = async () => {
+    try {
+      const gardenPlants = await getPlants()
+      setPlants(gardenPlants)
+      setManualForm((current) => {
+        if (current.plant_id || gardenPlants.length === 0) {
+          return current
+        }
+
+        return {
+          ...current,
+          plant_id: gardenPlants[0].id,
+        }
+      })
+    } catch {
+      setPlants([])
+    }
+  }
+
   const onCompleteTask = async (taskId: string) => {
     setCompletingTaskId(taskId)
 
@@ -123,8 +160,60 @@ export default function PlanPage() {
     }
   }
 
+  const openManualForm = () => {
+    setManualFormError(null)
+    setIsManualFormOpen(true)
+  }
+
+  const onManualFieldChange = (field: keyof typeof manualForm, value: string) => {
+    setManualFormError(null)
+    setManualForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const onCancelManualTask = () => {
+    setManualFormError(null)
+    setIsManualFormOpen(false)
+  }
+
+  const onSaveManualTask = async () => {
+    if (!manualForm.plant_id || !manualForm.title.trim() || !manualForm.reason.trim() || !manualForm.due_date) {
+      setManualFormError("Completa todos los campos para guardar la tarea.")
+      return
+    }
+
+    setIsSavingManualTask(true)
+    setManualFormError(null)
+
+    try {
+      const plan = await createManualWeeklyPlanTask({
+        plant_id: manualForm.plant_id,
+        title: manualForm.title.trim(),
+        reason: manualForm.reason.trim(),
+        priority: manualForm.priority,
+        due_date: manualForm.due_date,
+      })
+
+      setWeekStart(plan.week_start)
+      setTasks(Array.isArray(plan.tasks) ? plan.tasks : [])
+      setIsManualFormOpen(false)
+      setManualForm((current) => ({
+        ...current,
+        title: "",
+        reason: "",
+      }))
+    } catch (saveError: unknown) {
+      setManualFormError(getErrorMessage(saveError, "No pudimos guardar la tarea manual. Intenta de nuevo."))
+    } finally {
+      setIsSavingManualTask(false)
+    }
+  }
+
   useEffect(() => {
     void loadPlan()
+    void loadPlants()
   }, [])
 
   const totalTasks = tasks.length
@@ -147,11 +236,21 @@ export default function PlanPage() {
 
     return Array.from(grouped.entries())
       .sort((a, b) => a[0].localeCompare(b[0], "es"))
-      .map(([plantName, plantTasks]) => ({
-        plantName,
-        highPriorityCount: plantTasks.filter((task) => task.priority === "high").length,
-        tasks: plantTasks.slice().sort((a, b) => a.due_date.localeCompare(b.due_date)),
-      }))
+      .map(([plantName, plantTasks]) => {
+        const sortedTasks = plantTasks.slice().sort((a, b) => a.due_date.localeCompare(b.due_date))
+        const completedCount = sortedTasks.filter((task) => task.status === "completed").length
+        const totalCount = sortedTasks.length
+        const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+        return {
+          plantName,
+          highPriorityCount: sortedTasks.filter((task) => task.priority === "high").length,
+          completedCount,
+          totalCount,
+          progressPercent,
+          tasks: sortedTasks,
+        }
+      })
   }, [tasks])
 
   const hasData = !isLoading && tasks.length > 0
@@ -170,28 +269,135 @@ export default function PlanPage() {
               <p className="text-secondary text-sm">{formatWeekStartLabel(weekStart)}</p>
             </div>
 
-            <div className="rounded-full border border-white/15 bg-black/15 px-3 py-1 text-xs text-secondary">
-              {isLoading ? "Preparando agenda" : completionText(pendingTasks, totalTasks)}
+            <div className="flex items-center gap-2">
+              <div className="rounded-full border border-white/15 bg-black/15 px-3 py-1 text-xs text-secondary">
+                {isLoading ? "Preparando agenda" : completionText(pendingTasks, totalTasks)}
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={openManualForm}
+                disabled={plants.length === 0}
+              >
+                Anadir tarea
+              </button>
             </div>
           </div>
         </div>
 
+        {isManualFormOpen ? (
+          <section className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-4">
+            <div className="mb-3">
+              <h2 className="text-primary text-base font-semibold">Nueva tarea manual</h2>
+              <p className="text-secondary text-xs">Agrega un cuidado personalizado para una planta de esta semana.</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="space-y-1 text-xs text-secondary">
+                <span>Planta</span>
+                <select
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-black/20 px-3 py-2 text-sm text-primary"
+                  value={manualForm.plant_id}
+                  onChange={(event) => onManualFieldChange("plant_id", event.target.value)}
+                  disabled={isSavingManualTask}
+                >
+                  {plants.map((plant) => (
+                    <option key={plant.id} value={plant.id}>
+                      {plant.nickname || "Planta sin nombre"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1 text-xs text-secondary">
+                <span>Prioridad</span>
+                <select
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-black/20 px-3 py-2 text-sm text-primary"
+                  value={manualForm.priority}
+                  onChange={(event) => onManualFieldChange("priority", event.target.value)}
+                  disabled={isSavingManualTask}
+                >
+                  <option value="low">Baja</option>
+                  <option value="medium">Media</option>
+                  <option value="high">Alta</option>
+                </select>
+              </label>
+
+              <label className="space-y-1 text-xs text-secondary md:col-span-2">
+                <span>Titulo</span>
+                <input
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-black/20 px-3 py-2 text-sm text-primary"
+                  value={manualForm.title}
+                  onChange={(event) => onManualFieldChange("title", event.target.value)}
+                  placeholder="Ej: Podar rosas"
+                  disabled={isSavingManualTask}
+                />
+              </label>
+
+              <label className="space-y-1 text-xs text-secondary md:col-span-2">
+                <span>Motivo o nota</span>
+                <input
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-black/20 px-3 py-2 text-sm text-primary"
+                  value={manualForm.reason}
+                  onChange={(event) => onManualFieldChange("reason", event.target.value)}
+                  placeholder="Ej: Revisar hojas amarillas"
+                  disabled={isSavingManualTask}
+                />
+              </label>
+
+              <label className="space-y-1 text-xs text-secondary md:w-64">
+                <span>Fecha</span>
+                <input
+                  type="date"
+                  className="w-full rounded-[var(--radius-2)] border border-white/15 bg-black/20 px-3 py-2 text-sm text-primary"
+                  value={manualForm.due_date}
+                  onChange={(event) => onManualFieldChange("due_date", event.target.value)}
+                  disabled={isSavingManualTask}
+                />
+              </label>
+            </div>
+
+            {manualFormError ? <p className="mt-3 text-sm text-red-200">{manualFormError}</p> : null}
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-white/20 bg-transparent px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-white/10"
+                onClick={onCancelManualTask}
+                disabled={isSavingManualTask}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void onSaveManualTask()
+                }}
+                disabled={isSavingManualTask || plants.length === 0}
+              >
+                {isSavingManualTask ? "Guardando..." : "Guardar tarea"}
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-4 py-4">
             <p className="text-hairline text-xs uppercase tracking-[0.14em]">Pendientes</p>
-            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "—" : pendingTasks}</p>
+            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "-" : pendingTasks}</p>
           </div>
           <div className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-4 py-4">
             <p className="text-hairline text-xs uppercase tracking-[0.14em]">Plantas activas</p>
-            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "—" : plantsWithTasks}</p>
+            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "-" : plantsWithTasks}</p>
           </div>
           <div className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-4 py-4">
             <p className="text-hairline text-xs uppercase tracking-[0.14em]">Total tareas</p>
-            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "—" : totalTasks}</p>
+            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "-" : totalTasks}</p>
           </div>
           <div className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-4 py-4">
             <p className="text-hairline text-xs uppercase tracking-[0.14em]">Alta prioridad</p>
-            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "—" : highPriorityTasks}</p>
+            <p className="text-primary mt-1 text-2xl font-semibold">{isLoading ? "-" : highPriorityTasks}</p>
           </div>
         </div>
 
@@ -220,7 +426,7 @@ export default function PlanPage() {
         {!isLoading && !error && tasks.length === 0 ? (
           <div className="rounded-[var(--radius-3)] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-4 py-5">
             <p className="text-primary font-medium">No hay tareas para esta semana</p>
-            <p className="text-secondary mt-1 text-sm">Tu jardín está al día. Vuelve pronto para revisar nuevas sugerencias.</p>
+            <p className="text-secondary mt-1 text-sm">Tu jardin esta al dia. Vuelve pronto para revisar nuevas sugerencias.</p>
           </div>
         ) : null}
 
@@ -234,13 +440,26 @@ export default function PlanPage() {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h2 className="text-primary text-base font-semibold">{group.plantName}</h2>
-                    <p className="text-secondary text-xs">{group.tasks.length} tareas esta semana</p>
+                    <p className="text-secondary text-xs">{group.totalCount} tareas esta semana</p>
                   </div>
                   {group.highPriorityCount > 0 ? (
                     <span className="rounded-full border border-red-300/30 bg-red-300/15 px-2.5 py-1 text-[11px] font-medium text-red-100">
                       {group.highPriorityCount} alta prioridad
                     </span>
                   ) : null}
+                </div>
+
+                <div className="mb-3 rounded-[var(--radius-2)] border border-white/10 bg-black/15 px-3 py-2">
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="text-secondary">{group.completedCount} de {group.totalCount} tareas completadas</span>
+                    <span className="text-primary">{group.progressPercent}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,rgba(120,255,170,0.75),rgba(120,255,170,0.35))] transition-all duration-300"
+                      style={{ width: `${group.progressPercent}%` }}
+                    />
+                  </div>
                 </div>
 
                 <ul className="space-y-2">
@@ -270,6 +489,11 @@ export default function PlanPage() {
                           >
                             {priorityLabel(task.priority)}
                           </span>
+                          {task.kind === "manual" ? (
+                            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[11px] font-medium text-secondary">
+                              Manual
+                            </span>
+                          ) : null}
                           {task.status === "completed" ? (
                             <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2 py-0.5 text-[11px] font-medium text-emerald-100">
                               Hecho

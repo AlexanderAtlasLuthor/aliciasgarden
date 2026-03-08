@@ -51,6 +51,10 @@ type SupabaseState = {
   selectFilters: Array<Record<string, unknown>>;
   updateFilters: Array<Record<string, unknown>>;
   accessedTables: string[];
+  plantsMaybeSingleResult: {
+    data: { id: string; nickname: string } | null;
+    error: SupabaseError;
+  };
 };
 
 const testEnv: TestEnv = {
@@ -91,6 +95,10 @@ const supabaseState: SupabaseState = {
   selectFilters: [],
   updateFilters: [],
   accessedTables: [],
+  plantsMaybeSingleResult: {
+    data: null,
+    error: null,
+  },
 };
 
 const generateWeeklyPlanMock = vi.fn(async () => generatedPlan);
@@ -181,6 +189,30 @@ const getSupabaseMock = vi.fn(() => ({
       };
     }
 
+    if (table === 'plants') {
+      return {
+        select: () => {
+          const filters: Record<string, unknown> = {};
+          return {
+            eq: (column: string, value: unknown) => {
+              filters[column] = value;
+              return {
+                eq: (secondColumn: string, secondValue: unknown) => {
+                  filters[secondColumn] = secondValue;
+                  return {
+                    maybeSingle: async () => {
+                      supabaseState.selectFilters.push({ table: 'plants', ...filters });
+                      return supabaseState.plantsMaybeSingleResult;
+                    },
+                  };
+                },
+              };
+            },
+          };
+        },
+      };
+    }
+
     throw new Error(`Unexpected table access: ${table}`);
   },
 }));
@@ -228,6 +260,10 @@ beforeEach(() => {
   supabaseState.selectFilters = [];
   supabaseState.updateFilters = [];
   supabaseState.accessedTables = [];
+  supabaseState.plantsMaybeSingleResult = {
+    data: null,
+    error: null,
+  };
 
   getSupabaseMock.mockClear();
   generateWeeklyPlanMock.mockClear();
@@ -1009,5 +1045,219 @@ describe('plan routes - subfase 5.4', () => {
     expect(supabaseState.careEventInsertPayloads).toHaveLength(1);
     expect(supabaseState.updatePayloads).toHaveLength(1);
     expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('plan routes - subfase 6 manual tasks', () => {
+  it('POST /plan/tasks/manual creates manual task and persists it in weekly_plans.tasks_json', async () => {
+    const existingTasks: WeeklyPlanTask[] = [
+      {
+        task_id: 'task-auto-1',
+        plant_id: 'plant-1',
+        plant_name: 'Monstera',
+        kind: 'watering',
+        title: 'Regar Monstera',
+        reason: 'Han pasado 7 dias.',
+        due_date: '2026-03-03',
+        priority: 'high',
+        status: 'pending',
+      },
+    ];
+
+    supabaseState.selectResults = [
+      {
+        data: {
+          week_start: generatedPlan.week_start,
+          tasks_json: existingTasks,
+        },
+        error: null,
+      },
+    ];
+    supabaseState.plantsMaybeSingleResult = {
+      data: {
+        id: 'plant-1',
+        nickname: 'Monstera',
+      },
+      error: null,
+    };
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/manual',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: 'plant-1',
+          title: 'Podar Monstera',
+          reason: 'Limpieza preventiva.',
+          priority: 'medium',
+          due_date: '2026-03-05',
+        }),
+      },
+      testEnv as Required<TestEnv>,
+    );
+
+    const body = (await response.json()) as Record<string, unknown>;
+    const responseTasks = body.tasks as WeeklyPlanTask[];
+
+    expect(response.status).toBe(200);
+    expect(Object.prototype.hasOwnProperty.call(body, 'week_start')).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(body, 'tasks')).toBe(true);
+
+    expect(responseTasks).toHaveLength(2);
+    expect(responseTasks[0].task_id).toBe('task-auto-1');
+
+    const manualTask = responseTasks[1];
+    expect(manualTask.task_id.startsWith('manual-')).toBe(true);
+    expect(manualTask.kind).toBe('manual');
+    expect(manualTask.status).toBe('pending');
+    expect(manualTask.completed_at).toBeNull();
+    expect(manualTask.plant_id).toBe('plant-1');
+    expect(manualTask.plant_name).toBe('Monstera');
+    expect(manualTask.title).toBe('Podar Monstera');
+    expect(manualTask.reason).toBe('Limpieza preventiva.');
+    expect(manualTask.priority).toBe('medium');
+    expect(manualTask.due_date).toBe('2026-03-05');
+
+    expect(supabaseState.updatePayloads).toHaveLength(1);
+    const updatePayload = supabaseState.updatePayloads[0] as {
+      tasks_json?: WeeklyPlanTask[];
+    };
+    expect(updatePayload.tasks_json).toBeDefined();
+    expect(updatePayload.tasks_json).toHaveLength(2);
+  });
+
+  it('POST /plan/tasks/manual validates invalid payload', async () => {
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/manual',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: 'plant-1',
+          reason: 'Sin titulo.',
+          priority: 'medium',
+          due_date: '2026-03-05',
+        }),
+      },
+      testEnv as Required<TestEnv>,
+    );
+
+    const body = (await response.json()) as unknown;
+    expect(response.status).toBe(400);
+    expect(getErrorCode(body)).toBe('VALIDATION_ERROR');
+    expect(supabaseState.updatePayloads).toHaveLength(0);
+  });
+
+  it('POST /plan/tasks/manual rejects invalid calendar due_date (overflow)', async () => {
+    supabaseState.plantsMaybeSingleResult = {
+      data: {
+        id: 'plant-1',
+        nickname: 'Monstera',
+      },
+      error: null,
+    };
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/manual',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: 'plant-1',
+          title: 'Podar Monstera',
+          reason: 'Limpieza preventiva.',
+          priority: 'medium',
+          due_date: '2026-02-31',
+        }),
+      },
+      testEnv as Required<TestEnv>,
+    );
+
+    const body = (await response.json()) as unknown;
+    expect(response.status).toBe(400);
+    expect(getErrorCode(body)).toBe('VALIDATION_ERROR');
+    expect(supabaseState.updatePayloads).toHaveLength(0);
+  });
+
+  it('POST /plan/tasks/manual fails when plant does not belong to profile', async () => {
+    supabaseState.plantsMaybeSingleResult = {
+      data: null,
+      error: null,
+    };
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/manual',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: 'other-plant',
+          title: 'Podar',
+          reason: 'No corresponde al perfil.',
+          priority: 'low',
+          due_date: '2026-03-05',
+        }),
+      },
+      testEnv as Required<TestEnv>,
+    );
+
+    const body = (await response.json()) as unknown;
+    expect(response.status).toBe(404);
+    expect(getErrorCode(body)).toBe('PLANT_NOT_FOUND');
+    expect(supabaseState.updatePayloads).toHaveLength(0);
+  });
+
+  it('POST /plan/tasks/manual creates base weekly plan when it does not exist and keeps automatic tasks', async () => {
+    supabaseState.selectResults = [
+      { data: null, error: null },
+      { data: null, error: null },
+    ];
+    supabaseState.insertData = {
+      week_start: generatedPlan.week_start,
+      tasks_json: generatedPlan.tasks,
+    };
+    supabaseState.plantsMaybeSingleResult = {
+      data: {
+        id: 'plant-1',
+        nickname: 'Monstera',
+      },
+      error: null,
+    };
+
+    const { default: app } = await import('../src/index');
+
+    const response = await app.request(
+      '/plan/tasks/manual',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: 'plant-1',
+          title: 'Fertilizar Monstera',
+          reason: 'Refuerzo semanal.',
+          priority: 'high',
+          due_date: '2026-03-06',
+        }),
+      },
+      testEnv as Required<TestEnv>,
+    );
+
+    const body = (await response.json()) as Record<string, unknown>;
+    const responseTasks = body.tasks as WeeklyPlanTask[];
+
+    expect(response.status).toBe(200);
+    expect(generateWeeklyPlanMock).toHaveBeenCalledTimes(1);
+    expect(responseTasks.length).toBe(generatedPlan.tasks.length + 1);
+    expect(responseTasks.some((task) => task.task_id === generatedPlan.tasks[0].task_id)).toBe(true);
+    expect(responseTasks.some((task) => task.kind === 'manual')).toBe(true);
   });
 });
